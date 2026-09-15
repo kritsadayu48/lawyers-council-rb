@@ -20,12 +20,30 @@ Route::get('/news/{news:slug}', [HomeController::class, 'showNews'])->name('news
 
 // เครื่องมือสำหรับติดตั้งบนโฮสติ้ง cPanel (เรียกใช้งานผ่าน Browser)
 Route::get('/install-storage-link', function () {
+    $dirs = [
+        storage_path('framework/views'),
+        storage_path('framework/sessions'),
+        storage_path('framework/cache/data'),
+        storage_path('logs'),
+        storage_path('app/private/livewire-tmp'),
+        storage_path('app/public/livewire-tmp'),
+        storage_path('app/public/law-documents'),
+        storage_path('app/public/news-covers'),
+        storage_path('app/public/news-galleries'),
+    ];
+    foreach ($dirs as $dir) {
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        @chmod($dir, 0775);
+    }
+
     $link = public_path('storage');
     if (file_exists($link) && is_link($link)) {
         unlink($link);
     }
     \Illuminate\Support\Facades\Artisan::call('storage:link');
-    return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2> เชื่อมต่อ Storage Symlink สำเร็จเรียบร้อย!</h2><p>ไฟล์ PDF และรูปภาพพร้อมเปิดใช้งานแล้ว</p><a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#d97706;color:#fff;text-decoration:none;border-radius:6px;">กลับหน้าหลัก</a></div>';
+    return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>🎉 เชื่อมต่อ Storage และสร้างโฟลเดอร์สำหรับอัปโหลดสำเร็จเรียบร้อย!</h2><p>โฟลเดอร์สำหรับไฟล์ PDF, รูปภาพ และ Livewire Upload พร้อมใช้งานแล้ว</p><a href="/admin/law-documents" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#d97706;color:#fff;text-decoration:none;border-radius:6px;">กลับไปหน้าอัปโหลดเอกสาร</a></div>';
 });
 
 Route::get('/clear-cache', function () {

@@ -11,6 +11,11 @@ foreach ([
     __DIR__.'/../storage/framework/sessions',
     __DIR__.'/../storage/framework/cache/data',
     __DIR__.'/../storage/logs',
+    __DIR__.'/../storage/app/private/livewire-tmp',
+    __DIR__.'/../storage/app/public/livewire-tmp',
+    __DIR__.'/../storage/app/public/law-documents',
+    __DIR__.'/../storage/app/public/news-covers',
+    __DIR__.'/../storage/app/public/news-galleries',
 ] as $storageDir) {
     if (!is_dir($storageDir)) {
         @mkdir($storageDir, 0775, true);
