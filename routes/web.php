@@ -98,6 +98,41 @@ Route::get('/check-upload', function () {
         ];
     }
 
+    // สร้างตาราง cache และ cache_locks ในฐานข้อมูลอัตโนมัติหากยังไม่มี
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('cache')) {
+            \Illuminate\Support\Facades\DB::statement("
+                CREATE TABLE IF NOT EXISTS `cache` (
+                  `key` varchar(255) NOT NULL,
+                  `value` mediumtext NOT NULL,
+                  `expiration` bigint NOT NULL,
+                  PRIMARY KEY (`key`),
+                  KEY `cache_expiration_index` (`expiration`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+            $results['cache_table_created'] = 'SUCCESS';
+        } else {
+            $results['cache_table_created'] = 'ALREADY_EXISTS';
+        }
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('cache_locks')) {
+            \Illuminate\Support\Facades\DB::statement("
+                CREATE TABLE IF NOT EXISTS `cache_locks` (
+                  `key` varchar(255) NOT NULL,
+                  `owner` varchar(255) NOT NULL,
+                  `expiration` bigint NOT NULL,
+                  PRIMARY KEY (`key`),
+                  KEY `cache_locks_expiration_index` (`expiration`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+            $results['cache_locks_table_created'] = 'SUCCESS';
+        } else {
+            $results['cache_locks_table_created'] = 'ALREADY_EXISTS';
+        }
+    } catch (\Throwable $e) {
+        $results['cache_table_error'] = $e->getMessage();
+    }
+
     try {
         $testFile = $targetDir . '/test_' . time() . '.txt';
         file_put_contents($testFile, 'test');
