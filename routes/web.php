@@ -51,6 +51,17 @@ Route::get('/clear-cache', function () {
     return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2> ล้างแคชระบบ (Optimize Clear) สำเร็จ!</h2><a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#0f172a;color:#fff;text-decoration:none;border-radius:6px;">กลับหน้าหลัก</a></div>';
 });
 
+Route::get('/debug-log', function () {
+    $logFile = storage_path('logs/laravel.log');
+    if (!file_exists($logFile)) {
+        return 'No log file found at: ' . $logFile;
+    }
+    $content = file_get_contents($logFile);
+    $lines = explode("\n", $content);
+    $lastLines = array_slice($lines, -150);
+    return '<pre style="background:#0f172a;color:#f8fafc;padding:20px;font-size:12px;overflow:auto;white-space:pre-wrap;">' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
+});
+
 Route::get('/migrate-db', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate --force');
