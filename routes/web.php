@@ -32,3 +32,20 @@ Route::get('/clear-cache', function () {
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
     return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2> ล้างแคชระบบ (Optimize Clear) สำเร็จ!</h2><a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#0f172a;color:#fff;text-decoration:none;border-radius:6px;">กลับหน้าหลัก</a></div>';
 });
+
+Route::get('/migrate-db', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate --force');
+        \Illuminate\Support\Facades\Artisan::call('db:seed --class=DemoDataSeeder --force');
+        \App\Models\User::firstOrCreate(
+            ['email' => 'feemubankru48@gmail.com'],
+            [
+                'name' => 'Fee',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            ]
+        );
+        return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>🎉 ติดตั้งฐานข้อมูล MySQL สำเร็จสมบูรณ์ 100%!</h2><p>ระบบสร้างตาราง นำเข้าหมวดหมู่ ข่าวสาร ประกาศ เอกสารกฎหมาย และบัญชีแอดมินลง MySQL เรียบร้อยแล้ว</p><a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#d97706;color:#fff;text-decoration:none;border-radius:6px;">กลับสู่หน้าแรก</a></div>';
+    } catch (\Throwable $e) {
+        return '<div style="font-family:sans-serif;padding:30px;color:#b91c1c;text-align:center;"><h2>❌ เกิดข้อผิดพลาดในการเชื่อมต่อ MySQL</h2><p style="background:#fee2e2;padding:15px;border-radius:6px;display:inline-block;text-align:left;">' . htmlspecialchars($e->getMessage()) . '</p><p>โปรดตรวจสอบ DB_DATABASE, DB_USERNAME และ DB_PASSWORD ในไฟล์ .env ให้ถูกต้อง</p></div>';
+    }
+});
