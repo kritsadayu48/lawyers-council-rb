@@ -19,31 +19,73 @@ Route::get('/news', [HomeController::class, 'newsIndex'])->name('news.index');
 Route::get('/news/{news:slug}', [HomeController::class, 'showNews'])->name('news.show');
 
 // เครื่องมือสำหรับติดตั้งบนโฮสติ้ง cPanel (เรียกใช้งานผ่าน Browser)
-Route::get('/install-storage-link', function () {
-    $dirs = [
-        storage_path('framework/views'),
-        storage_path('framework/sessions'),
-        storage_path('framework/cache/data'),
-        storage_path('logs'),
-        storage_path('app/private/livewire-tmp'),
-        storage_path('app/public/livewire-tmp'),
-        storage_path('app/public/law-documents'),
-        storage_path('app/public/news-covers'),
-        storage_path('app/public/news-galleries'),
-    ];
-    foreach ($dirs as $dir) {
+Route::get('/repair-symlink', function () {
+    $publicStorage = public_path('storage');
+    $target = storage_path('app/public');
+    $output = [];
+
+    // สร้างโฟลเดอร์ปลายทางให้ครบ
+    foreach ([
+        $target,
+        $target . '/news-covers',
+        $target . '/news-galleries',
+        $target . '/law-documents',
+        $target . '/demo',
+    ] as $dir) {
         if (!is_dir($dir)) {
-            @mkdir($dir, 0775, true);
+            @mkdir($dir, 0777, true);
         }
-        @chmod($dir, 0775);
+        @chmod($dir, 0777);
     }
 
-    $link = public_path('storage');
-    if (file_exists($link) && is_link($link)) {
-        unlink($link);
+    // 1. ถ้า public/storage เป็นโฟลเดอร์จริง ให้ก๊อปปี้ไฟล์ทั้งหมดเข้าไปที่ storage/app/public ก่อน แล้วลบออก
+    if (file_exists($publicStorage)) {
+        if (is_link($publicStorage)) {
+            @unlink($publicStorage);
+            $output[] = "ลบ Symlink เดิมเรียบร้อย";
+        } elseif (is_dir($publicStorage)) {
+            $output[] = "พบ public/storage เป็นโฟลเดอร์จริง กำลังซิงค์ไฟล์ไปยัง storage/app/public...";
+            try {
+                $iterator = new RecursiveIteratorIterator(
+                    new RecursiveDirectoryIterator($publicStorage, RecursiveDirectoryIterator::SKIP_DOTS),
+                    RecursiveIteratorIterator::SELF_FIRST
+                );
+                foreach ($iterator as $item) {
+                    $subPath = substr($item->getPathname(), strlen($publicStorage));
+                    $destPath = $target . $subPath;
+                    if ($item->isDir()) {
+                        if (!is_dir($destPath)) {
+                            @mkdir($destPath, 0777, true);
+                        }
+                    } else {
+                        if (!file_exists($destPath)) {
+                            @copy($item->getPathname(), $destPath);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                $output[] = "Sync error: " . $e->getMessage();
+            }
+
+            // ลบโฟลเดอร์จริงทิ้งเพื่อแทนที่ด้วย Symlink
+            exec("rm -rf " . escapeshellarg($publicStorage));
+            $output[] = "ลบโฟลเดอร์จริง public/storage เพื่อเตรียมสร้าง Symlink เรียบร้อย";
+        }
     }
-    \Illuminate\Support\Facades\Artisan::call('storage:link');
-    return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>🎉 เชื่อมต่อ Storage และสร้างโฟลเดอร์สำหรับอัปโหลดสำเร็จเรียบร้อย!</h2><p>โฟลเดอร์สำหรับไฟล์ PDF, รูปภาพ และ Livewire Upload พร้อมใช้งานแล้ว</p><a href="/admin/law-documents" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#d97706;color:#fff;text-decoration:none;border-radius:6px;">กลับไปหน้าอัปโหลดเอกสาร</a></div>';
+
+    // 2. สร้าง Symlink
+    if (@symlink($target, $publicStorage)) {
+        $output[] = "✅ สร้าง Symlink [public/storage -> storage/app/public] สำเร็จสมบูรณ์ 100%!";
+    } else {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        $output[] = "Artisan storage:link output: " . \Illuminate\Support\Facades\Artisan::output();
+    }
+
+    return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>🎉 ซ่อมแซมระบบแสดงรูปภาพและเอกสาร PDF สำเร็จแล้ว!</h2><pre style="text-align:left;background:#f1f5f9;padding:15px;display:inline-block;border-radius:8px;font-size:13px;">' . htmlspecialchars(implode("\n", $output)) . '</pre><br><a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#d97706;color:#fff;text-decoration:none;border-radius:6px;">กลับไปดูหน้าแรก</a></div>';
+});
+
+Route::get('/install-storage-link', function () {
+    return redirect('/repair-symlink');
 });
 
 Route::get('/clear-cache', function () {
