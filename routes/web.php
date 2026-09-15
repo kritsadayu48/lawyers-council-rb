@@ -62,6 +62,54 @@ Route::get('/debug-log', function () {
     return '<pre style="background:#0f172a;color:#f8fafc;padding:20px;font-size:12px;overflow:auto;white-space:pre-wrap;">' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
 });
 
+Route::get('/check-upload', function () {
+    $results = [];
+    $results['upload_max_filesize'] = ini_get('upload_max_filesize');
+    $results['post_max_size'] = ini_get('post_max_size');
+    $results['memory_limit'] = ini_get('memory_limit');
+    $results['upload_tmp_dir'] = ini_get('upload_tmp_dir') ?: sys_get_temp_dir();
+    $results['upload_tmp_dir_writable'] = is_writable($results['upload_tmp_dir']);
+
+    $disk = \Livewire\Features\SupportFileUploads\FileUploadConfiguration::disk();
+    $results['livewire_disk'] = $disk;
+    $targetDir = \Illuminate\Support\Facades\Storage::disk($disk)->path('livewire-tmp');
+    $results['livewire_target_dir'] = $targetDir;
+
+    $storagePaths = [
+        storage_path('app'),
+        storage_path('app/private'),
+        storage_path('app/private/livewire-tmp'),
+        storage_path('app/public'),
+        storage_path('app/public/livewire-tmp'),
+        storage_path('app/public/law-documents'),
+        storage_path('app/public/news-covers'),
+        storage_path('app/public/news-galleries'),
+    ];
+
+    foreach ($storagePaths as $p) {
+        if (!is_dir($p)) {
+            @mkdir($p, 0777, true);
+        }
+        @chmod($p, 0777);
+        $results['paths'][$p] = [
+            'exists' => is_dir($p),
+            'writable' => is_writable($p),
+            'perms' => is_dir($p) ? substr(sprintf('%o', fileperms($p)), -4) : 'none',
+        ];
+    }
+
+    try {
+        $testFile = $targetDir . '/test_' . time() . '.txt';
+        file_put_contents($testFile, 'test');
+        $results['write_test'] = file_exists($testFile) ? 'SUCCESS' : 'FAILED';
+        @unlink($testFile);
+    } catch (\Throwable $e) {
+        $results['write_test_error'] = $e->getMessage();
+    }
+
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+});
+
 Route::get('/migrate-db', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate --force');
