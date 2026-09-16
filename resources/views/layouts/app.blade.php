@@ -16,9 +16,11 @@
     <meta property="og:locale" content="th_TH">
     <meta property="og:image" content="{{ asset('images/logo.png') }}">
 
-    <!-- Favicon ตราสัญลักษณ์สภาทนายความ -->
-    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
+    <!-- Favicon ตราสัญลักษณ์สภาทนายความ (พร้อม Cache-Busting) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v=2">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v=2">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=2">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
