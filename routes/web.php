@@ -18,6 +18,62 @@ Route::view('/contact', 'pages.contact')->name('contact');
 Route::get('/news', [HomeController::class, 'newsIndex'])->name('news.index');
 Route::get('/news/{news:slug}', [HomeController::class, 'showNews'])->name('news.show');
 
+// Dynamic Sitemap & Robots.txt สำหรับ Google Search Console และ SEO
+Route::get('/sitemap.xml', function () {
+    $baseUrl = config('app.url', 'https://ratchaburilawyerscouncil.or.th');
+    $newsList = \App\Models\News::where('is_published', true)->latest()->get();
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+    // หน้าหลัก
+    $staticPages = [
+        ['loc' => $baseUrl . '/', 'priority' => '1.0', 'changefreq' => 'daily'],
+        ['loc' => $baseUrl . '/about', 'priority' => '0.8', 'changefreq' => 'monthly'],
+        ['loc' => $baseUrl . '/news', 'priority' => '0.9', 'changefreq' => 'daily'],
+        ['loc' => $baseUrl . '/documents', 'priority' => '0.9', 'changefreq' => 'weekly'],
+        ['loc' => $baseUrl . '/contact', 'priority' => '0.8', 'changefreq' => 'monthly'],
+    ];
+
+    foreach ($staticPages as $page) {
+        $xml .= '<url>';
+        $xml .= '<loc>' . htmlspecialchars($page['loc']) . '</loc>';
+        $xml .= '<lastmod>' . date('Y-m-d') . '</lastmod>';
+        $xml .= '<changefreq>' . $page['changefreq'] . '</changefreq>';
+        $xml .= '<priority>' . $page['priority'] . '</priority>';
+        $xml .= '</url>';
+    }
+
+    // หน้าข่าวสารแต่ละโพสต์
+    foreach ($newsList as $news) {
+        $xml .= '<url>';
+        $xml .= '<loc>' . htmlspecialchars($baseUrl . '/news/' . $news->slug) . '</loc>';
+        $xml .= '<lastmod>' . ($news->updated_at ? $news->updated_at->format('Y-m-d') : date('Y-m-d')) . '</lastmod>';
+        $xml .= '<changefreq>weekly</changefreq>';
+        $xml .= '<priority>0.7</priority>';
+        $xml .= '</url>';
+    }
+
+    $xml .= '</urlset>';
+
+    return response($xml, 200)->header('Content-Type', 'application/xml');
+});
+
+Route::get('/robots.txt', function () {
+    $baseUrl = config('app.url', 'https://ratchaburilawyerscouncil.or.th');
+    $content = "User-agent: *\n";
+    $content .= "Allow: /\n";
+    $content .= "Disallow: /admin\n";
+    $content .= "Disallow: /repair-symlink\n";
+    $content .= "Disallow: /clear-cache\n";
+    $content .= "Disallow: /debug-log\n";
+    $content .= "Disallow: /check-upload\n";
+    $content .= "Disallow: /migrate-db\n\n";
+    $content .= "Sitemap: " . $baseUrl . "/sitemap.xml\n";
+
+    return response($content, 200)->header('Content-Type', 'text/plain');
+});
+
 // กลุ่มเครื่องมือผู้ดูแลระบบและซ่อมบำรุง (ต้องมีสิทธิ์ล็อกอิน Admin หรือใส่ token ลับ ?secret=...)
 Route::group(['middleware' => function ($request, $next) {
     $secret = env('MAINTENANCE_SECRET', 'LawyersRbAdmin2026!');
