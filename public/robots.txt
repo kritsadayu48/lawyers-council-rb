@@ -1,2 +1,10 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin
+Disallow: /repair-symlink
+Disallow: /clear-cache
+Disallow: /debug-log
+Disallow: /check-upload
+Disallow: /migrate-db
+
+Sitemap: https://ratchaburilawyerscouncil.or.th/sitemap.xml
