@@ -107,8 +107,9 @@
             <div>
                 <h3 class="text-white font-bold mb-3 text-base">ช่องทางติดต่อ</h3>
                 <p class="text-xs text-gray-400 leading-relaxed">
-                    โทร: 097-195-2029<br>
-                    อีเมล: Lawyerscouncilrb@gmail.com
+                    33 ถนนเสือป่า ซอย 4 ต.หน้าเมือง อ.เมืองราชบุรี จ.ราชบุรี 70000<br>
+                    โทร: <a href="tel:0971952029" class="hover:text-amber-400">097-195-2029</a><br>
+                    อีเมล: <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400">Lawyerscouncilrb@gmail.com</a>
                 </p>
             </div>
         </div>
