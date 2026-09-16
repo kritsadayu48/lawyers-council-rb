@@ -6,17 +6,20 @@
 
     RewriteEngine On
 
-    # ป้องกันการเข้าถึงไฟล์ .env และไฟล์ระบบที่ขึ้นต้นด้วยจุด
+    # ป้องกันการเข้าถึงไฟล์ .env, .git และไฟล์ระบบที่ขึ้นต้นด้วยจุด
     <FilesMatch "^\.">
         Order allow,deny
         Deny from all
     </FilesMatch>
 
-    # ป้องกันการเข้าถึง .env
-    <Files .env>
+    # ป้องกันการเข้าถึง .env และ config สำคัญ
+    <FilesMatch "(\.env|\.env\.production|\.env\.example|composer\.(json|lock)|package\.(json|lock)|artisan|\.sqlite|\.sql|\.log)$">
         Order allow,deny
         Deny from all
-    </Files>
+    </FilesMatch>
+
+    # ป้องกันการเข้าถึงโฟลเดอร์สำคัญโดยตรง
+    RedirectMatch 403 ^/(app|bootstrap|config|database|resources|routes|storage/logs|tests)/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

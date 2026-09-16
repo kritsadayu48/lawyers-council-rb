@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'สภาทนายความจังหวัดราชบุรี')</title>
+    <meta name="description" content="@yield('meta_description', 'เว็บไซต์อย่างเป็นทางการ สภาทนายความจังหวัดราชบุรี ให้ความช่วยเหลือประชาชนทางกฎหมาย คลังเอกสารกฎหมาย และข่าวสารกิจกรรม')">
+    <meta name="keywords" content="สภาทนายความจังหวัดราชบุรี, สภาทนายความ, ปรึกษากฎหมายราชบุรี, ทนายความราชบุรี, คลังเอกสารกฎหมาย, ขอความช่วยเหลือทางกฎหมาย">
+    
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="@yield('title', 'สภาทนายความจังหวัดราชบุรี')">
+    <meta property="og:description" content="@yield('meta_description', 'เว็บไซต์อย่างเป็นทางการ สภาทนายความจังหวัดราชบุรี ให้ความช่วยเหลือประชาชนทางกฎหมาย คลังเอกสารกฎหมาย และข่าวสารกิจกรรม')">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:site_name" content="สภาทนายความจังหวัดราชบุรี">
+    <meta property="og:locale" content="th_TH">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Font: Prompt -->
@@ -22,40 +33,50 @@
     <div class="bg-slate-900 text-gray-300 text-xs py-2 px-4 border-b border-slate-800">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
             <div class="flex items-center space-x-4">
-                <span><i class="fa-solid fa-phone mr-1 text-amber-500"></i> 097-195-2029</span>
-                <span><i class="fa-solid fa-envelope mr-1 text-amber-500"></i> Lawyerscouncilrb@gmail.com</span>
+                <a href="tel:0971952029" class="hover:text-amber-400 transition flex items-center">
+                    <i class="fa-solid fa-phone mr-1.5 text-amber-500"></i> 097-195-2029
+                </a>
+                <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400 transition flex items-center">
+                    <i class="fa-solid fa-envelope mr-1.5 text-amber-500"></i> Lawyerscouncilrb@gmail.com
+                </a>
             </div>
             <div>
-                <a href="/admin" class="hover:text-amber-400"><i class="fa-solid fa-lock mr-1"></i> สำหรับเจ้าหน้าที่ (เข้าสู่ระบบ)</a>
+                <a href="/admin" class="hover:text-amber-400 transition"><i class="fa-solid fa-lock mr-1"></i> สำหรับเจ้าหน้าที่ (เข้าสู่ระบบ)</a>
             </div>
         </div>
     </div>
 
     <!-- Header & Logo -->
-    <header class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center space-x-4">
-                <div class="w-14 h-14 bg-amber-600 rounded-full flex items-center justify-center text-white text-2xl shadow">
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-4">
+            <a href="{{ route('home') }}" class="flex items-center space-x-3 sm:space-x-4 group">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-amber-600 group-hover:bg-amber-700 transition rounded-full flex items-center justify-center text-white text-xl sm:text-2xl shadow">
                     <i class="fa-solid fa-scale-balanced"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-slate-900">สภาทนายความจังหวัดราชบุรี</h1>
-                    <p class="text-xs text-slate-500 font-medium tracking-wide">RATCHABURI LAWYERS COUNCIL</p>
+                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">สภาทนายความจังหวัดราชบุรี</h1>
+                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium tracking-wide">RATCHABURI LAWYERS COUNCIL</p>
                 </div>
-            </div>
+            </a>
+            
             <div class="text-right hidden md:block">
                 <p class="text-xs text-slate-500">ยึดมั่นในความยุติธรรม ปกป้องสิทธิและเสรีภาพของประชาชน</p>
             </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuBtn" type="button" class="md:hidden p-2 text-slate-700 hover:text-amber-600 text-xl focus:outline-none" aria-label="Toggle navigation">
+                <i class="fa-solid fa-bars"></i>
+            </button>
         </div>
 
         <!-- Navbar Menu -->
         <nav class="bg-slate-800 text-white shadow-inner">
-            <div class="max-w-7xl mx-auto px-4 flex items-center space-x-1 sm:space-x-2 text-sm font-medium overflow-x-auto whitespace-nowrap">
-                <a href="{{ route('home') }}" class="py-3 px-3 transition {{ request()->routeIs('home') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-house mr-1"></i> หน้าแรก</a>
-                <a href="{{ route('about') }}" class="py-3 px-3 transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-users mr-1"></i> เกี่ยวกับองค์กร/โครงสร้าง</a>
-                <a href="{{ route('news.index') }}" class="py-3 px-3 transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-newspaper mr-1"></i> ข่าวสารและกิจกรรม</a>
-                <a href="{{ route('documents.index') }}" class="py-3 px-3 transition {{ request()->routeIs('documents.*') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-book mr-1"></i> คลังกฎหมายและแบบฟอร์ม</a>
-                <a href="{{ route('contact') }}" class="py-3 px-3 transition {{ request()->routeIs('contact') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-address-book mr-1"></i> ติดต่อเรา</a>
+            <div id="navMenu" class="hidden md:flex max-w-7xl mx-auto px-4 flex-col md:flex-row md:items-center space-y-1 md:space-y-0 md:space-x-1 sm:space-x-2 text-sm font-medium py-2 md:py-0">
+                <a href="{{ route('home') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('home') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-house mr-1"></i> หน้าแรก</a>
+                <a href="{{ route('about') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-users mr-1"></i> เกี่ยวกับองค์กร/โครงสร้าง</a>
+                <a href="{{ route('news.index') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-newspaper mr-1"></i> ข่าวสารและกิจกรรม</a>
+                <a href="{{ route('documents.index') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('documents.*') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-book mr-1"></i> คลังกฎหมายและแบบฟอร์ม</a>
+                <a href="{{ route('contact') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('contact') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-address-book mr-1"></i> ติดต่อเรา</a>
             </div>
         </nav>
     </header>
@@ -96,5 +117,16 @@
         </div>
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('mobileMenuBtn');
+            var menu = document.getElementById('navMenu');
+            if (btn && menu) {
+                btn.addEventListener('click', function() {
+                    menu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
 </body>
 </html>
