@@ -310,7 +310,7 @@
         </h3>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-center text-xs">
             <a href="https://www.lawyerscouncil.or.th" target="_blank" class="bg-white p-3 rounded-lg border hover:border-amber-400 hover:shadow-sm transition flex flex-col items-center justify-center gap-2 group">
-                <i class="fa-solid fa-scale-balanced text-amber-600 text-xl group-hover:scale-110 transition"></i>
+                <img src="{{ asset('images/logo.png') }}" alt="สภาทนายความ" class="w-8 h-8 object-contain group-hover:scale-110 transition">
                 <span class="font-medium text-slate-800">สภาทนายความฯ (ส่วนกลาง)</span>
             </a>
             <a href="https://rbnc.coj.go.th" target="_blank" class="bg-white p-3 rounded-lg border hover:border-amber-400 hover:shadow-sm transition flex flex-col items-center justify-center gap-2 group">

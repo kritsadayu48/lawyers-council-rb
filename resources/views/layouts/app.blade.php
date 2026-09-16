@@ -14,6 +14,11 @@
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:site_name" content="สภาทนายความจังหวัดราชบุรี">
     <meta property="og:locale" content="th_TH">
+    <meta property="og:image" content="{{ asset('images/logo.png') }}">
+
+    <!-- Favicon ตราสัญลักษณ์สภาทนายความ -->
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -50,8 +55,8 @@
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-4">
             <a href="{{ route('home') }}" class="flex items-center space-x-3 sm:space-x-4 group">
-                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-amber-600 group-hover:bg-amber-700 transition rounded-full flex items-center justify-center text-white text-xl sm:text-2xl shadow">
-                    <i class="fa-solid fa-scale-balanced"></i>
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white shadow-md border border-slate-200 group-hover:shadow-lg transition shrink-0 p-0.5">
+                    <img src="{{ asset('images/logo.png') }}" alt="ตราสัญลักษณ์สภาทนายความในพระบรมราชูปถัมภ์" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <h1 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">สภาทนายความจังหวัดราชบุรี</h1>
@@ -90,7 +95,10 @@
     <footer class="bg-slate-900 text-gray-400 text-sm py-8 border-t-4 border-amber-600">
         <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
             <div>
-                <h3 class="text-white font-bold mb-3 text-base">สภาทนายความจังหวัดราชบุรี</h3>
+                <div class="flex items-center space-x-3 mb-3">
+                    <img src="{{ asset('images/logo.png') }}" alt="ตราสัญลักษณ์สภาทนายความ" class="w-10 h-10 rounded-full bg-white p-0.5 object-contain">
+                    <h3 class="text-white font-bold text-base">สภาทนายความจังหวัดราชบุรี</h3>
+                </div>
                 <p class="text-xs leading-relaxed text-gray-400">
                     หน่วยงานส่งเสริมวิชาชีพทนายความ ให้ความช่วยเหลือประชาชนทางกฎหมาย และผดุงความยุติธรรมในสังคม
                 </p>
