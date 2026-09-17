@@ -19,8 +19,14 @@
 
     <!-- ภาพปกข่าว (ถ้ามี) -->
     @if($news->cover_image)
-    <div class="mb-6 rounded-lg overflow-hidden border">
-        <img src="{{ asset('storage/' . $news->cover_image) }}" alt="{{ $news->title }}" class="w-full max-h-[450px] object-cover">
+    <div class="mb-6 rounded-xl overflow-hidden border border-gray-200 bg-slate-50">
+        <a href="{{ asset('storage/' . $news->cover_image) }}" target="_blank" rel="noopener noreferrer" class="block cursor-zoom-in group relative" title="คลิกเพื่อดูรูปภาพขนาดเต็ม">
+            <img src="{{ asset('storage/' . $news->cover_image) }}" alt="{{ $news->title }}" class="w-full h-auto mx-auto object-contain transition duration-200 group-hover:opacity-95">
+            <div class="absolute bottom-3 right-3 bg-slate-900/75 text-white text-xs px-2.5 py-1 rounded-md opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition duration-200 flex items-center gap-1.5 shadow-sm backdrop-blur-sm pointer-events-none">
+                <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                <span>ดูรูปขนาดเต็ม</span>
+            </div>
+        </a>
     </div>
     @endif
 
