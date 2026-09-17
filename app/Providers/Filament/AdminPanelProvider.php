@@ -44,6 +44,19 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\StatsOverview::class,
                 Widgets\AccountWidget::class,
             ])
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('กลับสู่หน้าเว็บไซต์')
+                    ->url('/', shouldOpenInNewTab: false)
+                    ->icon('heroicon-o-arrow-left-on-rectangle')
+                    ->group('เว็บไซต์ภายนอก')
+                    ->sort(99),
+            ])
+            ->userMenuItems([
+                \Filament\Navigation\MenuItem::make()
+                    ->label('กลับสู่หน้าเว็บไซต์')
+                    ->url('/')
+                    ->icon('heroicon-o-globe-alt'),
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
