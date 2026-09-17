@@ -25,13 +25,18 @@
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=2">
 
-    <!-- Tailwind CSS (Production Config) -->
-    <script>
-        // ปิด warning ใน production console
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = { corePlugins: { preflight: true } };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Compiled Production Assets (CSS & JS) -->
+    @if (file_exists(public_path('build/manifest.json')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <!-- Fallback to Tailwind CDN if build not present -->
+        <script>
+            window.tailwind = window.tailwind || {};
+            window.tailwind.config = { corePlugins: { preflight: true } };
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
+    @endif
+
     <!-- Google Font: Prompt -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

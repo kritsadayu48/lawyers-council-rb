@@ -12,36 +12,51 @@
     </div>
 
     <!-- ฟอร์มค้นหาและตัวกรอง -->
-    <form method="GET" action="{{ route('documents.index') }}" class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="md:col-span-2">
-                <label class="block text-xs font-semibold text-gray-600 mb-1">คำค้นหา (ชื่อเอกสาร / เลขที่)</label>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="พิมพ์ชื่อเอกสารหรือเลขที่คำสั่ง..." 
-                       class="w-full text-sm border-gray-300 rounded px-3 py-2 border focus:ring-1 focus:ring-amber-500 focus:outline-none">
+    <form id="docSearchForm" method="GET" action="{{ route('documents.index') }}" class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+            <div class="md:col-span-6">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">
+                    <i class="fa-solid fa-bolt text-amber-500 mr-1"></i> ค้นหาทันใจ (พิมพ์แล้วกรองทันที)
+                </label>
+                <div class="relative">
+                    <input type="text" id="liveDocSearch" name="search" value="{{ request('search') }}" 
+                           placeholder="พิมพ์ชื่อเอกสาร, เลขที่, หรือคำสำคัญ..." 
+                           autocomplete="off"
+                           class="w-full text-sm border-gray-300 rounded-lg pl-9 pr-8 py-2.5 border focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400 absolute left-3 top-3 text-sm"></i>
+                    <button type="button" id="clearLiveDocSearch" class="hidden text-gray-400 hover:text-gray-600 absolute right-3 top-3 text-xs">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">หมวดหมู่เอกสาร</label>
-                <select name="category_id" class="w-full text-sm border-gray-300 rounded px-3 py-2 border focus:outline-none">
-                    <option value="">-- ทุกหมวดหมู่ --</option>
+            <div class="md:col-span-4">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">หมวดหมู่เอกสาร</label>
+                <select id="docCategorySelect" name="category_id" class="w-full text-sm border-gray-300 rounded-lg px-3 py-2.5 border focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition">
+                    <option value="">-- ทุกหมวดหมู่เอกสาร --</option>
                     @foreach($categories as $cat)
                         <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="flex items-end gap-2">
-                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded text-sm transition">
-                    <i class="fa-solid fa-magnifying-glass mr-1"></i> ค้นหา
+            <div class="md:col-span-2 flex items-end gap-2">
+                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition shadow-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-magnifying-glass"></i> ค้นหา
                 </button>
-                <a href="{{ route('documents.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded text-sm">
-                    รีเซ็ต
+                @if(request('search') || request('category_id') || request('year'))
+                <a href="{{ route('documents.index') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 px-3 rounded-lg text-sm transition" title="ล้างตัวกรองทั้งหมด">
+                    <i class="fa-solid fa-rotate-left"></i>
                 </a>
+                @endif
             </div>
+        </div>
+        <div id="liveMatchCount" class="text-xs text-amber-700 font-medium mt-2.5 hidden">
+            <i class="fa-solid fa-info-circle mr-1"></i> พบเอกสารที่ตรงกัน <span id="matchNumber" class="font-bold">0</span> รายการในหน้านี้
         </div>
     </form>
 
     <!-- ตารางแสดงรายการเอกสาร -->
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table id="documentsTable" class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-100 text-slate-700 text-xs uppercase font-semibold border-b border-slate-200">
                     <th class="py-3.5 px-4 w-12 text-center">#</th>
@@ -51,7 +66,7 @@
                     <th class="py-3.5 px-4 text-center whitespace-nowrap min-w-[200px]">เอกสาร / ดาวน์โหลด</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 text-sm">
+            <tbody id="documentsTbody" class="divide-y divide-gray-100 text-sm">
                 @forelse($documents as $index => $doc)
                 <tr class="hover:bg-slate-50 transition">
                     <td class="py-3.5 px-4 text-center text-gray-400 text-xs align-middle">{{ $documents->firstItem() + $index }}</td>
@@ -108,4 +123,53 @@
         {{ $documents->links() }}
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('liveDocSearch');
+        const clearBtn = document.getElementById('clearLiveDocSearch');
+        const countBox = document.getElementById('liveMatchCount');
+        const matchNumber = document.getElementById('matchNumber');
+        const tbody = document.getElementById('documentsTbody');
+        
+        if (!input || !tbody) return;
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        function filterRows() {
+            const query = input.value.trim().toLowerCase();
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+                countBox.classList.add('hidden');
+                rows.forEach(r => r.style.display = '');
+                return;
+            }
+
+            let matches = 0;
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    row.style.display = '';
+                    matches++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            countBox.classList.remove('hidden');
+            matchNumber.textContent = matches;
+        }
+
+        input.addEventListener('input', filterRows);
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                input.value = '';
+                filterRows();
+                input.focus();
+            });
+        }
+    });
+</script>
 @endsection

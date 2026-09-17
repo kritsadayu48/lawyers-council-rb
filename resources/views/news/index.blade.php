@@ -22,15 +22,24 @@
 
     <!-- ฟอร์มค้นหาและตัวกรองหมวดหมู่ -->
     <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-        <form method="GET" action="{{ route('news.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <form id="newsSearchForm" method="GET" action="{{ route('news.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-4">
             <!-- ช่องค้นหา -->
             <div class="md:col-span-6">
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">ค้นหาข่าวสาร</label>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5 flex items-center justify-between">
+                    <span><i class="fa-solid fa-bolt text-amber-500 mr-1"></i> ค้นหาทันใจ (พิมพ์แล้วกรองทันที)</span>
+                    <span id="newsLiveMatchCount" class="text-[11px] text-amber-700 font-normal hidden">
+                        พบ <strong id="newsMatchNumber">0</strong> รายการ
+                    </span>
+                </label>
                 <div class="relative">
-                    <input type="text" name="search" value="{{ request('search') }}" 
+                    <input type="text" id="liveNewsSearch" name="search" value="{{ request('search') }}" 
                            placeholder="พิมพ์คำค้นหาหัวข้อข่าว หรือเนื้อหา..." 
-                           class="w-full text-sm border-gray-300 rounded-lg pl-9 pr-3 py-2.5 border focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition">
+                           autocomplete="off"
+                           class="w-full text-sm border-gray-300 rounded-lg pl-9 pr-8 py-2.5 border focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition">
                     <i class="fa-solid fa-magnifying-glass text-gray-400 absolute left-3 top-3 text-sm"></i>
+                    <button type="button" id="clearLiveNewsSearch" class="hidden text-gray-400 hover:text-gray-600 absolute right-3 top-3 text-xs">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
                 </div>
             </div>
 
@@ -136,4 +145,52 @@
     </div>
 
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('liveNewsSearch');
+        const clearBtn = document.getElementById('clearLiveNewsSearch');
+        const countBox = document.getElementById('newsLiveMatchCount');
+        const matchNumber = document.getElementById('newsMatchNumber');
+        const cards = Array.from(document.querySelectorAll('.grid.grid-cols-1.sm\\:grid-cols-2.md\\:grid-cols-3 > a'));
+
+        if (!input || cards.length === 0) return;
+
+        function filterNews() {
+            const query = input.value.trim().toLowerCase();
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+                countBox.classList.add('hidden');
+                cards.forEach(c => c.style.display = '');
+                return;
+            }
+
+            let matches = 0;
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    card.style.display = '';
+                    matches++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            countBox.classList.remove('hidden');
+            matchNumber.textContent = matches;
+        }
+
+        input.addEventListener('input', filterNews);
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                input.value = '';
+                filterNews();
+                input.focus();
+            });
+        }
+    });
+</script>
 @endsection

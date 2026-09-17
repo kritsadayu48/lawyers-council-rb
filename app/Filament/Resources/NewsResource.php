@@ -73,6 +73,12 @@ class NewsResource extends Resource
             ->label('รูปภาพหน้าปกข่าว')
             ->directory('news-covers')
             ->image()
+            ->imageResizeMode('cover')
+            ->imageCropAspectRatio('16:9')
+            ->imageResizeTargetWidth('1200')
+            ->imageResizeTargetHeight('675')
+            ->maxSize(5120)
+            ->helperText('ระบบจะช่วยปรับขนาดและบีบอัดรูปภาพให้พอดีกับการแสดงผลหน้าเว็บโดยอัตโนมัติ')
             ->columnSpanFull(),
         RichEditor::make('content')
             ->label('เนื้อหาข่าวสาร')
@@ -84,6 +90,11 @@ class NewsResource extends Resource
             ->multiple()
             ->reorderable()
             ->image()
+            ->imageResizeMode('contain')
+            ->imageResizeTargetWidth('1600')
+            ->imageResizeTargetHeight('1200')
+            ->maxSize(5120)
+            ->helperText('รองรับหลายภาพ ระบบจะบีบอัดขนาดภาพให้โหลดเร็วขึ้นอัตโนมัติ')
             ->columnSpanFull(),
     ]);
 }
