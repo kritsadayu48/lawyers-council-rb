@@ -76,16 +76,8 @@
         </div>
 
         @if($heroSlides->count() > 1)
-        <!-- Prominent Navigation Arrows (แบบ lawyerscouncil.or.th) -->
-        <button type="button" id="grandPrevBtn" class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-black/50 hover:bg-amber-600 text-white flex items-center justify-center text-lg sm:text-2xl backdrop-blur-md border border-white/20 transition-all shadow-2xl z-30 focus:outline-none" aria-label="Previous Slide">
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <button type="button" id="grandNextBtn" class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-black/50 hover:bg-amber-600 text-white flex items-center justify-center text-lg sm:text-2xl backdrop-blur-md border border-white/20 transition-all shadow-2xl z-30 focus:outline-none" aria-label="Next Slide">
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-
-        <!-- Slide Indicators / Dots -->
-        <div class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30 bg-black/50 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15">
+        <!-- Slide Indicators / Dots (จุดบอกตำแหน่งสไลด์ด้านล่าง ไม่บดบังภาพ) -->
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
             @foreach($heroSlides as $dotIndex => $slide)
             <button type="button" class="grand-dot h-2 rounded-full transition-all duration-300 {{ $dotIndex === 0 ? 'w-7 bg-amber-500' : 'w-2.5 bg-white/50 hover:bg-white/80' }}" data-index="{{ $dotIndex }}" aria-label="Go to slide {{ $dotIndex + 1 }}"></button>
             @endforeach
@@ -155,22 +147,6 @@
                 }
             }
 
-            if (nextBtn) {
-                nextBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    nextSlide();
-                    startTimer();
-                });
-            }
-
-            if (prevBtn) {
-                prevBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    prevSlide();
-                    startTimer();
-                });
-            }
-
             dots.forEach(function(dot) {
                 dot.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -182,8 +158,22 @@
 
             carousel.addEventListener('mouseenter', stopTimer);
             carousel.addEventListener('mouseleave', startTimer);
-            carousel.addEventListener('touchstart', stopTimer, { passive: true });
-            carousel.addEventListener('touchend', startTimer, { passive: true });
+
+            let touchStartX = 0;
+            carousel.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                stopTimer();
+            }, { passive: true });
+
+            carousel.addEventListener('touchend', function(e) {
+                const touchEndX = e.changedTouches[0].screenX;
+                if (touchStartX - touchEndX > 50) {
+                    nextSlide(); // swipe left
+                } else if (touchEndX - touchStartX > 50) {
+                    prevSlide(); // swipe right
+                }
+                startTimer();
+            }, { passive: true });
 
             startTimer();
         });
