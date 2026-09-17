@@ -20,13 +20,13 @@
     <!-- ภาพปกข่าว (ถ้ามี) -->
     @if($news->cover_image)
     <div class="mb-6 rounded-xl overflow-hidden border border-gray-200 bg-slate-50">
-        <a href="{{ asset('storage/' . $news->cover_image) }}" target="_blank" rel="noopener noreferrer" class="block cursor-zoom-in group relative" title="คลิกเพื่อดูรูปภาพขนาดเต็ม">
+        <button type="button" onclick="openLightbox(0)" class="w-full text-left block cursor-zoom-in group relative focus:outline-none" title="คลิกเพื่อดูรูปขนาดใหญ่">
             <img src="{{ asset('storage/' . $news->cover_image) }}" alt="{{ $news->title }}" class="w-full h-auto mx-auto object-contain transition duration-200 group-hover:opacity-95">
-            <div class="absolute bottom-3 right-3 bg-slate-900/75 text-white text-xs px-2.5 py-1 rounded-md opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition duration-200 flex items-center gap-1.5 shadow-sm backdrop-blur-sm pointer-events-none">
-                <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                <span>ดูรูปขนาดเต็ม</span>
+            <div class="absolute bottom-3 right-3 bg-slate-900/80 text-white text-xs px-2.5 py-1.5 rounded-lg opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition duration-200 flex items-center gap-1.5 shadow-md backdrop-blur-sm pointer-events-none">
+                <i class="fa-solid fa-magnifying-glass-plus"></i>
+                <span>คลิกเพื่อดูรูปขยาย</span>
             </div>
-        </a>
+        </button>
     </div>
     @endif
 
@@ -42,13 +42,16 @@
             <i class="fa-regular fa-images text-amber-600"></i> ภาพบรรยากาศกิจกรรม ({{ count($news->gallery_images) }} ภาพ)
         </h3>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            @foreach($news->gallery_images as $image)
-            <a href="{{ asset('storage/' . $image) }}" target="_blank" class="group block aspect-video sm:aspect-square overflow-hidden rounded-lg border border-gray-200 bg-slate-100 hover:shadow-md transition relative" title="คลิกเพื่อดูภาพขยาย">
+            @foreach($news->gallery_images as $index => $image)
+            @php
+                $imgIndex = $news->cover_image ? ($index + 1) : $index;
+            @endphp
+            <button type="button" onclick="openLightbox({{ $imgIndex }})" class="group block aspect-video sm:aspect-square overflow-hidden rounded-lg border border-gray-200 bg-slate-100 hover:shadow-md transition relative text-left w-full focus:outline-none" title="คลิกเพื่อดูภาพขยาย">
                 <img src="{{ asset('storage/' . $image) }}" alt="ภาพกิจกรรม" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-lg">
                     <i class="fa-solid fa-magnifying-glass-plus"></i>
                 </div>
-            </a>
+            </button>
             @endforeach
         </div>
     </div>
@@ -80,4 +83,134 @@
         </a>
     </div>
 </div>
+
+@php
+    $allImages = [];
+    if ($news->cover_image) {
+        $allImages[] = asset('storage/' . $news->cover_image);
+    }
+    if (!empty($news->gallery_images) && is_array($news->gallery_images)) {
+        foreach ($news->gallery_images as $img) {
+            $allImages[] = asset('storage/' . $img);
+        }
+    }
+@endphp
+
+<!-- Image Lightbox Modal -->
+<div id="imageLightboxModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md items-center justify-center p-4 select-none" style="display: none;" role="dialog" aria-modal="true">
+    <!-- Close Button -->
+    <button type="button" id="lightboxCloseBtn" class="absolute top-4 right-4 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-lg transition z-30 focus:outline-none" title="ปิด (ESC)">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <!-- Prev Button -->
+    <button type="button" id="lightboxPrevBtn" class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 text-white/80 hover:text-white bg-white/10 hover:bg-white/25 rounded-full w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center text-lg sm:text-xl transition z-30 focus:outline-none" title="รูปก่อนหน้า (ลูกศรซ้าย)">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <!-- Next Button -->
+    <button type="button" id="lightboxNextBtn" class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 text-white/80 hover:text-white bg-white/10 hover:bg-white/25 rounded-full w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center text-lg sm:text-xl transition z-30 focus:outline-none" title="รูปถัดไป (ลูกศรขวา)">
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <!-- Image Container -->
+    <div class="max-w-5xl max-h-[92vh] flex flex-col items-center justify-center relative mx-auto z-10" id="lightboxContainer">
+        <img id="lightboxImage" src="" alt="ขยายรูปภาพ" class="max-h-[80vh] sm:max-h-[84vh] max-w-full object-contain rounded-lg shadow-2xl transition duration-200">
+        <div class="mt-3 flex items-center justify-between w-full text-white/80 text-xs px-2 gap-4">
+            <span id="lightboxCounter" class="bg-black/50 px-3 py-1 rounded-md">รูปที่ 1 จาก 1</span>
+            <a id="lightboxDownloadBtn" href="" download class="bg-black/50 hover:bg-black/70 px-3 py-1 rounded-md text-white/90 hover:text-white flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-download"></i> ดาวน์โหลดรูป
+            </a>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    const galleryItems = @json($allImages);
+    let currentIndex = 0;
+
+    const modal = document.getElementById('imageLightboxModal');
+    const lightboxImg = document.getElementById('lightboxImage');
+    const counter = document.getElementById('lightboxCounter');
+    const downloadBtn = document.getElementById('lightboxDownloadBtn');
+    const prevBtn = document.getElementById('lightboxPrevBtn');
+    const nextBtn = document.getElementById('lightboxNextBtn');
+
+    function updateLightbox() {
+        if (!galleryItems || galleryItems.length === 0) return;
+        lightboxImg.src = galleryItems[currentIndex];
+        downloadBtn.href = galleryItems[currentIndex];
+        counter.textContent = `รูปที่ ${currentIndex + 1} จาก ${galleryItems.length}`;
+        
+        if (galleryItems.length <= 1) {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+        } else {
+            prevBtn.style.display = 'flex';
+            nextBtn.style.display = 'flex';
+        }
+    }
+
+    function openLightbox(index) {
+        if (!galleryItems || galleryItems.length === 0) return;
+        currentIndex = (index >= 0 && index < galleryItems.length) ? index : 0;
+        updateLightbox();
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function prevImage() {
+        if (galleryItems.length <= 1) return;
+        currentIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length;
+        updateLightbox();
+    }
+
+    function nextImage() {
+        if (galleryItems.length <= 1) return;
+        currentIndex = (currentIndex + 1) % galleryItems.length;
+        updateLightbox();
+    }
+
+    if (modal) {
+        document.getElementById('lightboxCloseBtn').addEventListener('click', closeLightbox);
+        prevBtn.addEventListener('click', function(e) { e.stopPropagation(); prevImage(); });
+        nextBtn.addEventListener('click', function(e) { e.stopPropagation(); nextImage(); });
+
+        // Close on backdrop click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal || e.target.id === 'lightboxContainer') {
+                closeLightbox();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (modal.style.display !== 'flex') return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') prevImage();
+            if (e.key === 'ArrowRight') nextImage();
+        });
+
+        // Touch swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        modal.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        modal.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 50) nextImage();
+            if (touchEndX > touchStartX + 50) prevImage();
+        }, {passive: true});
+    }
+</script>
+@endpush
