@@ -16,6 +16,13 @@ class Category extends Model
                 $category->slug = empty($slug) ? ($category->type ?? 'cat') . '-' . date('YmdHis') . '-' . rand(10, 99) : $slug;
             }
         });
+
+        static::updating(function ($category) {
+            if (empty($category->slug)) {
+                $slug = \Illuminate\Support\Str::slug($category->name);
+                $category->slug = empty($slug) ? ($category->type ?? 'cat') . '-' . date('YmdHis') . '-' . rand(10, 99) : $slug;
+            }
+        });
     }
 
     public function news() { return $this->hasMany(News::class); }

@@ -37,30 +37,28 @@ class CategoryResource extends Resource
         return $form->schema([
             TextInput::make('name')
                 ->label('ชื่อหมวดหมู่')
-                ->placeholder('เช่น ข่าวสัมมนา, แบบฟอร์มศาล')
+                ->placeholder('พิมพ์ชื่อหมวดหมู่ เช่น ข่าวสัมมนา, แบบฟอร์มศาล')
                 ->required()
-                ->live(onBlur: true)
-                ->afterStateUpdated(function (Set $set, ?string $state) {
-                    if (filled($state)) {
-                        $slug = Str::slug($state);
-                        $set('slug', empty($slug) ? 'cat-' . date('YmdHis') : $slug);
-                    }
-                }),
-            TextInput::make('slug')
-                ->label('Slug (URL)')
-                ->placeholder('สร้างอัตโนมัติ')
-                ->helperText('รหัส URL ภาษาอังกฤษ (ระบบสร้างให้อัตโนมัติ สามารถแก้ไขเองได้)')
-                ->required()
-                ->unique(ignoreRecord: true),
+                ->maxLength(255)
+                ->columnSpanFull(),
             Select::make('type')
                 ->label('ประเภทการใช้งานหมวดหมู่')
                 ->options([
-                    'news' => 'หมวดหมู่ข่าวสาร / กิจกรรม / ประกาศ',
-                    'law_document' => 'หมวดหมู่คลังกฎหมาย / แบบฟอร์ม / ระเบียบ',
+                    'news' => '📰 สำหรับหมวดหมู่ข่าวสาร / กิจกรรม / ประกาศ',
+                    'law_document' => '📂 สำหรับหมวดหมู่คลังกฎหมาย / แบบฟอร์ม / ระเบียบ',
                 ])
                 ->default('news')
                 ->required()
-                ->helperText('เลือกประเภทเพื่อให้หมวดหมู่นี้ไปแสดงในส่วนข่าวสาร หรือส่วนคลังกฎหมาย'),
+                ->helperText('กำหนดว่าจะให้หมวดหมู่นี้ไปแสดงในส่วนข่าวสาร หรือส่วนดาวน์โหลดเอกสาร')
+                ->columnSpanFull(),
+            Forms\Components\Section::make('ตั้งค่าเพิ่มเติม (สำหรับแอดมิน / ไม่จำเป็นต้องแก้ไข)')
+                ->collapsed()
+                ->schema([
+                    TextInput::make('slug')
+                        ->label('รหัส URL (Slug)')
+                        ->helperText('หากเว้นว่างไว้ ระบบจะสร้างให้อัตโนมัติในฐานข้อมูล')
+                        ->unique(ignoreRecord: true),
+                ]),
         ]);
     }
 
@@ -69,10 +67,19 @@ class CategoryResource extends Resource
     return $table
         ->columns([
             TextColumn::make('name')->label('ชื่อหมวดหมู่')->searchable()->sortable(),
-            TextColumn::make('type')->label('ประเภท')->badge()->color(fn (string $state): string => match ($state) {
-                'news' => 'info',
-                'law_document' => 'success',
-            })->sortable(),
+            TextColumn::make('type')->label('ประเภทการใช้งาน')->badge()
+                ->formatStateUsing(fn (string $state): string => match ($state) {
+                    'news' => '📰 ข่าวสาร/กิจกรรม',
+                    'law_document' => '📂 คลังกฎหมาย/แบบฟอร์ม',
+                    default => $state,
+                })
+                ->color(fn (string $state): string => match ($state) {
+                    'news' => 'info',
+                    'law_document' => 'success',
+                    default => 'gray',
+                })->sortable(),
+            TextColumn::make('news_count')->counts('news')->label('จำนวนข่าว')->sortable(),
+            TextColumn::make('law_documents_count')->counts('lawDocuments')->label('จำนวนเอกสาร')->sortable(),
             TextColumn::make('created_at')->label('สร้างเมื่อ')->dateTime('d/m/Y')->sortable(),
         ])
         ->defaultSort('created_at', 'desc')

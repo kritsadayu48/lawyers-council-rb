@@ -44,30 +44,20 @@ class LawDocumentResource extends Resource
             ->preload()
             ->createOptionForm([
                 TextInput::make('name')
-                    ->label('ชื่อหมวดหมู่เอกสารใหม่')
-                    ->placeholder('เช่น แบบฟอร์มศาล, ข้อบังคับ')
+                    ->label('พิมพ์ชื่อหมวดหมู่เอกสารใหม่')
+                    ->placeholder('เช่น แบบฟอร์มศาล, คำร้องทั่วไป')
                     ->required()
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (Set $set, ?string $state) {
-                        $slug = Str::slug($state);
-                        $set('slug', empty($slug) ? 'doc-cat-' . date('YmdHis') : $slug);
-                    }),
-                TextInput::make('slug')
-                    ->label('Slug (URL)')
-                    ->helperText('สร้างให้อัตโนมัติ สามารถแก้ไขได้')
-                    ->required(),
+                    ->maxLength(255),
             ])
             ->createOptionUsing(function (array $data): int {
-                if (empty($data['slug'])) {
-                    $slug = Str::slug($data['name']);
-                    $data['slug'] = empty($slug) ? 'doc-cat-' . date('YmdHis') : $slug;
-                }
-                $data['type'] = 'law_document';
-                $cat = \App\Models\Category::create($data);
+                $cat = \App\Models\Category::create([
+                    'name' => trim($data['name']),
+                    'type' => 'law_document',
+                ]);
                 return $cat->id;
             })
             ->required()
-            ->helperText('💡 กดเครื่องหมาย + เพื่อสร้างหมวดหมู่เอกสารใหม่ได้ทันที'),
+            ->helperText('💡 กดเครื่องหมาย + ด้านข้างเพื่อพิมพ์สร้างหมวดหมู่เอกสารใหม่ได้ทันที'),
         TextInput::make('title')
             ->label('ชื่อเอกสาร / ระเบียบ / แบบฟอร์ม')
             ->required(),

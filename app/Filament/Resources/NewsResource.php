@@ -43,36 +43,26 @@ class NewsResource extends Resource
     {
         return $form->schema([
             Select::make('category_id')
-                ->label('หมวดหมู่')
+                ->label('หมวดหมู่ข่าว')
                 ->relationship('category', 'name', fn ($query) => $query->where('type', 'news'))
                 ->searchable()
                 ->preload()
                 ->createOptionForm([
                     TextInput::make('name')
-                        ->label('ชื่อหมวดหมู่ใหม่')
-                        ->placeholder('เช่น ข่าวสัมมนาวิชาการ')
+                        ->label('ชื่อหมวดหมู่ข่าวใหม่')
+                        ->placeholder('เช่น ข่าวสัมมนา, ประกาศด่วน')
                         ->required()
-                        ->live(onBlur: true)
-                        ->afterStateUpdated(function (Set $set, ?string $state) {
-                            $slug = Str::slug($state);
-                            $set('slug', empty($slug) ? 'news-cat-' . date('YmdHis') : $slug);
-                        }),
-                    TextInput::make('slug')
-                        ->label('Slug (URL)')
-                        ->helperText('สร้างให้อัตโนมัติ สามารถแก้ไขได้')
-                        ->required(),
+                        ->maxLength(255),
                 ])
                 ->createOptionUsing(function (array $data): int {
-                    if (empty($data['slug'])) {
-                        $slug = Str::slug($data['name']);
-                        $data['slug'] = empty($slug) ? 'news-cat-' . date('YmdHis') : $slug;
-                    }
-                    $data['type'] = 'news';
-                    $cat = \App\Models\Category::create($data);
+                    $cat = \App\Models\Category::create([
+                        'name' => trim($data['name']),
+                        'type' => 'news',
+                    ]);
                     return $cat->id;
                 })
                 ->required()
-                ->helperText('💡 กดเครื่องหมาย + เพื่อสร้างหมวดหมู่ใหม่ได้ทันที (หรือเลือก "ประกาศและหนังสือเวียน" เพื่อแสดงบนกระดานประกาศหน้าแรก)'),
+                ->helperText('💡 กดเครื่องหมาย + ด้านข้างเพื่อพิมพ์สร้างหมวดหมู่ใหม่ได้ทันที (หรือเลือก "ประกาศและหนังสือเวียน" เพื่อแสดงบนกระดานประกาศหน้าแรก)'),
             TextInput::make('title')
                 ->label('หัวข้อข่าว / หัวข้อประกาศ')
                 ->required()
