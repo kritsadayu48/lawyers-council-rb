@@ -47,8 +47,32 @@ class NewsResource extends Resource
                 ->relationship('category', 'name', fn ($query) => $query->where('type', 'news'))
                 ->searchable()
                 ->preload()
+                ->createOptionForm([
+                    TextInput::make('name')
+                        ->label('ชื่อหมวดหมู่ใหม่')
+                        ->placeholder('เช่น ข่าวสัมมนาวิชาการ')
+                        ->required()
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function (Set $set, ?string $state) {
+                            $slug = Str::slug($state);
+                            $set('slug', empty($slug) ? 'news-cat-' . date('YmdHis') : $slug);
+                        }),
+                    TextInput::make('slug')
+                        ->label('Slug (URL)')
+                        ->helperText('สร้างให้อัตโนมัติ สามารถแก้ไขได้')
+                        ->required(),
+                ])
+                ->createOptionUsing(function (array $data): int {
+                    if (empty($data['slug'])) {
+                        $slug = Str::slug($data['name']);
+                        $data['slug'] = empty($slug) ? 'news-cat-' . date('YmdHis') : $slug;
+                    }
+                    $data['type'] = 'news';
+                    $cat = \App\Models\Category::create($data);
+                    return $cat->id;
+                })
                 ->required()
-                ->helperText('💡 หากต้องการให้แสดงบน "กระดานประกาศและคำสั่ง" ที่หน้าแรก ให้เลือกหมวดหมู่ "ประกาศและหนังสือเวียน"'),
+                ->helperText('💡 กดเครื่องหมาย + เพื่อสร้างหมวดหมู่ใหม่ได้ทันที (หรือเลือก "ประกาศและหนังสือเวียน" เพื่อแสดงบนกระดานประกาศหน้าแรก)'),
             TextInput::make('title')
                 ->label('หัวข้อข่าว / หัวข้อประกาศ')
                 ->required()

@@ -74,14 +74,14 @@ Route::get('/robots.txt', function () {
     return response($content, 200)->header('Content-Type', 'text/plain');
 });
 
-// เครื่องมือสำหรับติดตั้ง/ซ่อมแซมตาราง visit_logs สำหรับนับสถิติ (รันครั้งเดียว)
+// เครื่องมือสำหรับติดตั้ง/อัปเดตตารางฐานข้อมูลและหมวดหมู่ (รันเมื่อมีการอัปเดตระบบ)
 Route::get('/init-stats-table', function () {
     $secret = env('MAINTENANCE_SECRET', 'LawyersRbAdmin2026!');
     if (request('secret') !== $secret && !auth()->check()) {
         abort(403);
     }
-    \Illuminate\Support\Facades\Artisan::call('migrate --path=database/migrations/2026_09_17_000001_create_visit_logs_table.php --force');
-    return '<h3>✅ Visit Logs table ready!</h3><a href="/">กลับหน้าหลัก</a>';
+    \Illuminate\Support\Facades\Artisan::call('migrate --force');
+    return '<h3>✅ Database & Categories updated successfully!</h3><p>' . nl2br(\Illuminate\Support\Facades\Artisan::output()) . '</p><a href="/admin">ไปที่ระบบแอดมิน</a> | <a href="/">กลับหน้าหลัก</a>';
 });
 
 // กลุ่มเครื่องมือผู้ดูแลระบบและซ่อมบำรุงขั้นสูง (ต้องมีสิทธิ์ล็อกอิน Admin หรือใส่ token ลับ ?secret=...)

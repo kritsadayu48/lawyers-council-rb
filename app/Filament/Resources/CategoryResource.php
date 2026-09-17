@@ -33,26 +33,36 @@ class CategoryResource extends Resource
     protected static ?string $pluralModelLabel = 'หมวดหมู่ทั้งหมด';
 
     public static function form(Form $form): Form
-{
-    return $form->schema([
-        TextInput::make('name')
-            ->label('ชื่อหมวดหมู่')
-            ->required()
-            ->live(onBlur: true)
-            ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
-        TextInput::make('slug')
-            ->label('Slug (URL)')
-            ->required()
-            ->unique(ignoreRecord: true),
-        Select::make('type')
-            ->label('ประเภทหมวดหมู่')
-            ->options([
-                'news' => 'หมวดหมู่ข่าวสาร / กิจกรรม',
-                'law_document' => 'หมวดหมู่คลังกฎหมาย / แบบฟอร์ม',
-            ])
-            ->required(),
-    ]);
-}
+    {
+        return $form->schema([
+            TextInput::make('name')
+                ->label('ชื่อหมวดหมู่')
+                ->placeholder('เช่น ข่าวสัมมนา, แบบฟอร์มศาล')
+                ->required()
+                ->live(onBlur: true)
+                ->afterStateUpdated(function (Set $set, ?string $state) {
+                    if (filled($state)) {
+                        $slug = Str::slug($state);
+                        $set('slug', empty($slug) ? 'cat-' . date('YmdHis') : $slug);
+                    }
+                }),
+            TextInput::make('slug')
+                ->label('Slug (URL)')
+                ->placeholder('สร้างอัตโนมัติ')
+                ->helperText('รหัส URL ภาษาอังกฤษ (ระบบสร้างให้อัตโนมัติ สามารถแก้ไขเองได้)')
+                ->required()
+                ->unique(ignoreRecord: true),
+            Select::make('type')
+                ->label('ประเภทการใช้งานหมวดหมู่')
+                ->options([
+                    'news' => 'หมวดหมู่ข่าวสาร / กิจกรรม / ประกาศ',
+                    'law_document' => 'หมวดหมู่คลังกฎหมาย / แบบฟอร์ม / ระเบียบ',
+                ])
+                ->default('news')
+                ->required()
+                ->helperText('เลือกประเภทเพื่อให้หมวดหมู่นี้ไปแสดงในส่วนข่าวสาร หรือส่วนคลังกฎหมาย'),
+        ]);
+    }
 
     public static function table(Table $table): Table
 {
