@@ -21,7 +21,7 @@
                         <strong>สภาทนายความจังหวัดราชบุรี</strong><br>
                         เลขที่ 33 ถนนเสือป่า ซอย 4 ตำบลหน้าเมือง อำเภอเมืองราชบุรี จังหวัดราชบุรี 70000
                     </p>
-                    <a href="https://maps.app.goo.gl/wJk4zX92pQdJgUeK8" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 font-semibold mt-2">
+                    <a href="https://www.google.com/maps/search/?api=1&query=13.5273853,99.810601" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 font-semibold mt-2">
                         <i class="fa-solid fa-diamond-turn-right"></i> เปิดนำทางบน Google Maps
                     </a>
                 </div>
@@ -114,7 +114,7 @@
                         <i class="fa-solid fa-map-location-dot text-amber-400"></i>
                         <span>แผนที่ตั้งสำนักงาน (ศาลจังหวัดราชบุรี)</span>
                     </div>
-                    <a href="https://maps.app.goo.gl/wJk4zX92pQdJgUeK8" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-white/10 hover:bg-white/20 text-amber-300 px-2.5 py-0.5 rounded transition flex items-center gap-1 font-medium">
+                    <a href="https://www.google.com/maps/search/?api=1&query=13.5273853,99.810601" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-white/10 hover:bg-white/20 text-amber-300 px-2.5 py-0.5 rounded transition flex items-center gap-1 font-medium">
                         เปิดใน Google Maps <i class="fa-solid fa-diamond-turn-right text-[9px]"></i>
                     </a>
                 </div>
