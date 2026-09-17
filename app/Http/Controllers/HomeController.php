@@ -45,10 +45,28 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
+        // รายการสไลด์ข่าวเด่นและประกาศสำคัญ (Hero Auto-slider)
+        $heroSlides = News::with('category')
+            ->where('is_published', true)
+            ->whereNotNull('cover_image')
+            ->latest('published_at')
+            ->latest('created_at')
+            ->take(6)
+            ->get();
+
+        if ($heroSlides->isEmpty()) {
+            $heroSlides = News::with('category')
+                ->where('is_published', true)
+                ->latest('published_at')
+                ->latest('created_at')
+                ->take(5)
+                ->get();
+        }
+
         $totalDocuments = LawDocument::count();
         $totalNews = News::where('is_published', true)->count();
 
-        return view('home', compact('latestNews', 'latestDocuments', 'announcements', 'announcementCategory', 'totalDocuments', 'totalNews'));
+        return view('home', compact('latestNews', 'latestDocuments', 'announcements', 'announcementCategory', 'totalDocuments', 'totalNews', 'heroSlides'));
     }
 
     public function showNews(News $news)

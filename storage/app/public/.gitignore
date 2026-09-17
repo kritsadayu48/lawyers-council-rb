@@ -1,2 +1,6 @@
 *
 !.gitignore
+!news-covers/
+!news-covers/*
+!news-galleries/
+!news-galleries/*

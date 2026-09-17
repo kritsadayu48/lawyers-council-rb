@@ -48,32 +48,184 @@
                 </div>
             </div>
 
-            <!-- Right Featured News / Banner -->
+            <!-- Right Featured News & Announcements Auto-sliding Carousel -->
             <div class="lg:col-span-5 p-6 lg:p-8">
-                @if($latestNews->first())
-                <a href="{{ route('news.show', $latestNews->first()) }}" class="group block relative rounded-xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-800">
-                    <div class="h-64 sm:h-72 overflow-hidden relative">
-                        @if($latestNews->first()->cover_image)
-                            <img src="{{ asset('storage/' . $latestNews->first()->cover_image) }}" alt="{{ $latestNews->first()->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        @else
-                            <div class="w-full h-full bg-slate-800 flex items-center justify-center text-gray-500">
-                                <i class="fa-regular fa-image text-5xl"></i>
-                            </div>
-                        @endif
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                        <span class="absolute top-3 left-3 text-xs font-semibold bg-amber-500 text-slate-950 px-2.5 py-1 rounded shadow">
-                            ★ ข่าวเด่นล่าสุด
-                        </span>
-                        <div class="absolute bottom-4 left-4 right-4 text-white">
-                            <span class="text-[11px] text-amber-400 font-medium block mb-1">
-                                <i class="fa-regular fa-calendar mr-1"></i> {{ optional($latestNews->first()->published_at)->format('d/m/Y') ?? $latestNews->first()->created_at->format('d/m/Y') }}
-                            </span>
-                            <h3 class="text-base sm:text-lg font-bold line-clamp-2 group-hover:text-amber-400 transition leading-snug">
-                                {{ $latestNews->first()->title }}
-                            </h3>
+                @if(isset($heroSlides) && $heroSlides->count() > 0)
+                <div id="heroCarousel" class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/80 bg-slate-900 group select-none">
+                    <!-- Slides Container -->
+                    <div class="relative h-72 sm:h-80 md:h-[22rem] w-full overflow-hidden">
+                        @foreach($heroSlides as $index => $slide)
+                        @php
+                            $isAnnouncement = $slide->category && (
+                                str_contains($slide->category->slug, 'announcement') ||
+                                str_contains($slide->category->slug, 'official') ||
+                                str_contains($slide->category->name, 'ประกาศ')
+                            );
+                        @endphp
+                        <div class="hero-slide absolute inset-0 transition-all duration-700 ease-in-out {{ $index === 0 ? 'opacity-100 scale-100 z-10 pointer-events-auto' : 'opacity-0 scale-95 z-0 pointer-events-none' }}" data-index="{{ $index }}">
+                            <a href="{{ route('news.show', $slide) }}" class="block w-full h-full relative group/item focus:outline-none">
+                                @if($slide->cover_image)
+                                    <img src="{{ asset('storage/' . $slide->cover_image) }}" alt="{{ $slide->title }}" class="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-700">
+                                @else
+                                    <div class="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-gray-500">
+                                        <i class="fa-regular fa-image text-5xl"></i>
+                                    </div>
+                                @endif
+                                <!-- Dark Gradient Layer for Contrast -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-black/20"></div>
+
+                                <!-- Badge / Category Tag -->
+                                <div class="absolute top-4 left-4 flex items-center gap-2">
+                                    @if($isAnnouncement)
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full shadow-lg">
+                                            <i class="fa-solid fa-bullhorn text-[11px]"></i> ประกาศทางการ
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full shadow-lg">
+                                            <i class="fa-solid fa-star text-[11px]"></i> ข่าวเด่นล่าสุด
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <!-- Slide Index Indicator Badge -->
+                                <div class="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm border border-slate-700/60 text-gray-300 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow">
+                                    <span class="text-amber-400 font-bold">{{ $index + 1 }}</span> / {{ $heroSlides->count() }}
+                                </div>
+
+                                <!-- Slide Content / Bottom Caption -->
+                                <div class="absolute bottom-4 left-4 right-4 text-white z-20">
+                                    <div class="flex items-center gap-2 text-[11px] text-amber-400 font-medium mb-1.5">
+                                        <span><i class="fa-regular fa-calendar mr-1"></i> {{ optional($slide->published_at)->format('d/m/Y') ?? $slide->created_at->format('d/m/Y') }}</span>
+                                        <span>•</span>
+                                        <span class="text-gray-300 line-clamp-1">{{ $slide->category->name ?? 'ทั่วไป' }}</span>
+                                    </div>
+                                    <h3 class="text-base sm:text-lg font-bold line-clamp-2 group-hover/item:text-amber-400 transition-colors duration-200 leading-snug drop-shadow-sm">
+                                        {{ $slide->title }}
+                                    </h3>
+                                    <span class="inline-flex items-center gap-1 text-xs text-amber-300 mt-2 font-semibold group-hover/item:underline">
+                                        อ่านรายละเอียด <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                    </span>
+                                </div>
+                            </a>
                         </div>
+                        @endforeach
                     </div>
-                </a>
+
+                    @if($heroSlides->count() > 1)
+                    <!-- Navigation Arrows -->
+                    <button type="button" id="heroPrevBtn" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-amber-600 text-white flex items-center justify-center transition-all opacity-80 hover:opacity-100 shadow-lg border border-slate-700 z-30 focus:outline-none" aria-label="Previous Slide">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    <button type="button" id="heroNextBtn" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-amber-600 text-white flex items-center justify-center transition-all opacity-80 hover:opacity-100 shadow-lg border border-slate-700 z-30 focus:outline-none" aria-label="Next Slide">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+
+                    <!-- Indicators / Dots -->
+                    <div class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30 bg-slate-950/60 backdrop-blur-sm px-2.5 py-1 rounded-full border border-slate-700/50">
+                        @foreach($heroSlides as $dotIndex => $slide)
+                        <button type="button" class="hero-dot h-1.5 rounded-full transition-all duration-300 {{ $dotIndex === 0 ? 'w-5 bg-amber-500' : 'w-2 bg-white/40 hover:bg-white/70' }}" data-index="{{ $dotIndex }}" aria-label="Go to slide {{ $dotIndex + 1 }}"></button>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Carousel Logic Script -->
+                @if($heroSlides->count() > 1)
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const carousel = document.getElementById('heroCarousel');
+                        if (!carousel) return;
+
+                        const slides = carousel.querySelectorAll('.hero-slide');
+                        const dots = carousel.querySelectorAll('.hero-dot');
+                        const prevBtn = document.getElementById('heroPrevBtn');
+                        const nextBtn = document.getElementById('heroNextBtn');
+                        const total = slides.length;
+                        let currentIndex = 0;
+                        let timer = null;
+                        const INTERVAL_MS = 4500;
+
+                        function showSlide(index) {
+                            if (index < 0) index = total - 1;
+                            if (index >= total) index = 0;
+                            currentIndex = index;
+
+                            slides.forEach((slide, i) => {
+                                if (i === currentIndex) {
+                                    slide.classList.remove('opacity-0', 'scale-95', 'z-0', 'pointer-events-none');
+                                    slide.classList.add('opacity-100', 'scale-100', 'z-10', 'pointer-events-auto');
+                                } else {
+                                    slide.classList.remove('opacity-100', 'scale-100', 'z-10', 'pointer-events-auto');
+                                    slide.classList.add('opacity-0', 'scale-95', 'z-0', 'pointer-events-none');
+                                }
+                            });
+
+                            dots.forEach((dot, i) => {
+                                if (i === currentIndex) {
+                                    dot.classList.remove('w-2', 'bg-white/40');
+                                    dot.classList.add('w-5', 'bg-amber-500');
+                                } else {
+                                    dot.classList.remove('w-5', 'bg-amber-500');
+                                    dot.classList.add('w-2', 'bg-white/40');
+                                }
+                            });
+                        }
+
+                        function nextSlide() {
+                            showSlide(currentIndex + 1);
+                        }
+
+                        function prevSlide() {
+                            showSlide(currentIndex - 1);
+                        }
+
+                        function startTimer() {
+                            stopTimer();
+                            timer = setInterval(nextSlide, INTERVAL_MS);
+                        }
+
+                        function stopTimer() {
+                            if (timer) {
+                                clearInterval(timer);
+                                timer = null;
+                            }
+                        }
+
+                        if (nextBtn) {
+                            nextBtn.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                nextSlide();
+                                startTimer();
+                            });
+                        }
+
+                        if (prevBtn) {
+                            prevBtn.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                prevSlide();
+                                startTimer();
+                            });
+                        }
+
+                        dots.forEach(function(dot) {
+                            dot.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                const idx = parseInt(dot.getAttribute('data-index'), 10);
+                                showSlide(idx);
+                                startTimer();
+                            });
+                        });
+
+                        carousel.addEventListener('mouseenter', stopTimer);
+                        carousel.addEventListener('mouseleave', startTimer);
+                        carousel.addEventListener('touchstart', stopTimer, { passive: true });
+                        carousel.addEventListener('touchend', startTimer, { passive: true });
+
+                        // Start autoplay
+                        startTimer();
+                    });
+                </script>
+                @endif
                 @endif
             </div>
         </div>
