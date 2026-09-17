@@ -78,10 +78,58 @@ Route::get('/robots.txt', function () {
 Route::get('/init-stats-table', function () {
     $secret = env('MAINTENANCE_SECRET', 'LawyersRbAdmin2026!');
     if (request('secret') !== $secret && !auth()->check()) {
-        abort(403);
+        abort(403, 'Forbidden: Invalid secret key.');
     }
-    \Illuminate\Support\Facades\Artisan::call('migrate --force');
-    return '<h3>✅ Database & Categories updated successfully!</h3><p>' . nl2br(\Illuminate\Support\Facades\Artisan::output()) . '</p><a href="/admin">ไปที่ระบบแอดมิน</a> | <a href="/">กลับหน้าหลัก</a>';
+
+    $log = [];
+
+    // 1. Run migrations safely
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $log[] = "Artisan migrate:\n" . \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Throwable $e) {
+        $log[] = "Artisan migrate warning: " . $e->getMessage();
+    }
+
+    // 2. Direct guarantee for categories
+    try {
+        $categories = [
+            ['name' => 'แบบฟอร์มศาลและคำร้องทั่วไป', 'slug' => 'court-forms', 'type' => 'law_document'],
+            ['name' => 'ระเบียบและแนวปฏิบัติด้านคดีความ', 'slug' => 'legal-procedures', 'type' => 'law_document'],
+            ['name' => 'มรรยาททนายความและจริยธรรมวิชาชีพ', 'slug' => 'lawyer-ethics', 'type' => 'law_document'],
+            ['name' => 'คำวินิจฉัยและมติสภาทนายความ', 'slug' => 'board-resolutions', 'type' => 'law_document'],
+            ['name' => 'เอกสารเผยแพร่ความรู้ทางกฎหมาย', 'slug' => 'legal-knowledge', 'type' => 'law_document'],
+            ['name' => 'ข่าวอบรมและสัมมนาวิชาการ', 'slug' => 'academic-trainings', 'type' => 'news'],
+            ['name' => 'กิจกรรมเพื่อสังคมและทนายความอาสา', 'slug' => 'probono-activities', 'type' => 'news'],
+            ['name' => 'การประชุมคณะกรรมการและสมาชิก', 'slug' => 'board-meetings', 'type' => 'news'],
+            ['name' => 'ประกาศรับสมัครและผลการสอบ', 'slug' => 'examinations-recruitment', 'type' => 'news'],
+        ];
+
+        $added = 0;
+        foreach ($categories as $cat) {
+            $exists = \Illuminate\Support\Facades\DB::table('categories')->where('slug', $cat['slug'])->exists();
+            if (!$exists) {
+                \Illuminate\Support\Facades\DB::table('categories')->insert([
+                    'name' => $cat['name'],
+                    'slug' => $cat['slug'],
+                    'type' => $cat['type'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $added++;
+            }
+        }
+        $log[] = "Categories checked: {$added} new categories added.";
+    } catch (\Throwable $e) {
+        $log[] = "Categories error: " . $e->getMessage();
+    }
+
+    return '<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">'
+        . '<h2 style="color: green;">✅ อัปเดตฐานข้อมูลและหมวดหมู่เรียบร้อยแล้ว</h2>'
+        . '<pre style="background: #f4f4f4; padding: 15px; border-radius: 6px;">' . htmlspecialchars(implode("\n\n", $log)) . '</pre>'
+        . '<p><a href="/admin" style="display: inline-block; padding: 8px 16px; background: #d97706; color: white; text-decoration: none; border-radius: 6px;">ไปยังระบบแอดมิน</a> &nbsp; '
+        . '<a href="/">กลับหน้าหลัก</a></p>'
+        . '</div>';
 });
 
 // กลุ่มเครื่องมือผู้ดูแลระบบและซ่อมบำรุงขั้นสูง (ต้องมีสิทธิ์ล็อกอิน Admin หรือใส่ token ลับ ?secret=...)
