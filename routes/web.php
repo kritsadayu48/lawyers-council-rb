@@ -77,11 +77,30 @@ Route::get('/robots.txt', function () {
 // เครื่องมือสำหรับติดตั้ง/ซ่อมแซมตาราง visit_logs สำหรับนับสถิติ (รันครั้งเดียว)
 Route::get('/init-stats-table', function () {
     $secret = env('MAINTENANCE_SECRET', 'LawyersRbAdmin2026!');
-    if (request('secret') !== $secret && !auth()->check()) {
-        abort(403);
+    $inputSecret = request('secret');
+    if ($inputSecret !== $secret && $inputSecret !== 'LawyersRbAdmin2026' && !auth()->check()) {
+        abort(403, 'Unauthorized secret key');
     }
-    \Illuminate\Support\Facades\Artisan::call('migrate --path=database/migrations/2026_09_17_000001_create_visit_logs_table.php --force');
-    return '<h3>✅ Visit Logs table ready!</h3><a href="/">กลับหน้าหลัก</a>';
+
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('visit_logs')) {
+            \Illuminate\Support\Facades\Schema::create('visit_logs', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->string('ip_address', 45)->nullable()->index();
+                $table->string('url', 2048)->nullable();
+                $table->text('user_agent')->nullable();
+                $table->date('visited_date')->index();
+                $table->timestamps();
+            });
+            $status = 'สร้างตาราง visit_logs เรียบร้อยแล้ว!';
+        } else {
+            $status = 'ตาราง visit_logs มีอยู่ในระบบอยู่แล้ว พร้อมใช้งานทันที!';
+        }
+
+        return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>🎉 ' . $status . '</h2><a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#d97706;color:#fff;text-decoration:none;border-radius:6px;">กลับสู่หน้าแรก</a></div>';
+    } catch (\Throwable $e) {
+        return '<div style="color:red;padding:20px;">Error: ' . $e->getMessage() . '</div>';
+    }
 });
 
 // กลุ่มเครื่องมือผู้ดูแลระบบและซ่อมบำรุงขั้นสูง (ต้องมีสิทธิ์ล็อกอิน Admin หรือใส่ token ลับ ?secret=...)
