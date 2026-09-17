@@ -11,21 +11,30 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $announcementCategory = Category::where('slug', 'official-announcements')->first();
+        $announcementCategory = Category::where('slug', 'official-announcements')
+            ->orWhere('name', 'like', '%ประกาศ%')
+            ->first();
 
-        // รายการประกาศและคำสั่งล่าสุด
+        $announcementCategoryIds = Category::where('type', 'news')
+            ->where(function ($q) {
+                $q->where('slug', 'official-announcements')
+                  ->orWhere('name', 'like', '%ประกาศ%');
+            })
+            ->pluck('id');
+
+        // รายการประกาศและคำสั่งล่าสุด (แสดงบนกระดานประกาศหน้าแรก)
         $announcements = News::with('category')
             ->where('is_published', true)
-            ->where('category_id', $announcementCategory?->id)
+            ->whereIn('category_id', $announcementCategoryIds)
             ->latest('published_at')
             ->latest('created_at')
-            ->take(4)
+            ->take(5)
             ->get();
 
         // ข่าวสารและกิจกรรมล่าสุด (แยกจากประกาศ)
         $latestNews = News::with('category')
             ->where('is_published', true)
-            ->when($announcementCategory, fn($q) => $q->where('category_id', '!=', $announcementCategory->id))
+            ->whereNotIn('category_id', $announcementCategoryIds)
             ->latest('published_at')
             ->latest('created_at')
             ->take(6)
