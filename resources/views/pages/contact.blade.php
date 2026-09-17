@@ -80,16 +80,55 @@
             </div>
         </div>
 
-        <!-- แผนที่ Google Maps -->
-        <div class="rounded-xl overflow-hidden border border-slate-200 h-72 md:h-full min-h-[300px] shadow-sm relative group">
-            <iframe 
-                src="https://maps.google.com/maps?q=13.5273853,99.810601+(สภาทนายความจังหวัดราชบุรี)&t=&z=17&ie=UTF8&iwloc=B&output=embed" 
-                width="100%" 
-                height="100%" 
-                style="border:0; min-height: 300px;" 
-                allowfullscreen="" 
-                loading="lazy">
-            </iframe>
+        <!-- คอลัมน์ขวา: เพจ Facebook และ แผนที่ Google Maps ตามตัวอย่าง -->
+        <div class="space-y-6 flex flex-col">
+            <!-- 1. Facebook Page Plugin Widget (กล่องเพจเฟซบุ๊กพร้อมปุ่ม Follow/Share ตามตัวอย่าง) -->
+            <div class="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">
+                <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-800">
+                    <div class="flex items-center gap-2 text-xs font-semibold">
+                        <i class="fa-brands fa-facebook text-base text-[#1877F2]"></i>
+                        <span>เพจเฟซบุ๊กทางการ (Facebook Page)</span>
+                    </div>
+                    <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-white/10 hover:bg-white/20 text-blue-300 px-2.5 py-0.5 rounded transition flex items-center gap-1 font-medium">
+                        เปิดเพจเต็ม <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                    </a>
+                </div>
+                <div class="p-3 bg-slate-50/50 flex justify-center items-center overflow-hidden">
+                    <iframe 
+                        src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FRachaburiLawyer&tabs=&width=500&height=130&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" 
+                        width="100%" 
+                        height="130" 
+                        style="border:none;overflow:hidden;max-width:500px;min-height:130px;" 
+                        scrolling="no" 
+                        frameborder="0" 
+                        allowfullscreen="true" 
+                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- 2. แผนที่ Google Maps (ตามตัวอย่างด้านล่าง) -->
+            <div class="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden flex-grow flex flex-col">
+                <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-800">
+                    <div class="flex items-center gap-2 text-xs font-semibold">
+                        <i class="fa-solid fa-map-location-dot text-amber-400"></i>
+                        <span>แผนที่ตั้งสำนักงาน (ศาลจังหวัดราชบุรี)</span>
+                    </div>
+                    <a href="https://maps.app.goo.gl/wJk4zX92pQdJgUeK8" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-white/10 hover:bg-white/20 text-amber-300 px-2.5 py-0.5 rounded transition flex items-center gap-1 font-medium">
+                        เปิดใน Google Maps <i class="fa-solid fa-diamond-turn-right text-[9px]"></i>
+                    </a>
+                </div>
+                <div class="h-64 sm:h-72 md:h-full min-h-[260px] w-full relative">
+                    <iframe 
+                        src="https://maps.google.com/maps?q=13.5273853,99.810601+(สภาทนายความจังหวัดราชบุรี)&t=&z=17&ie=UTF8&iwloc=B&output=embed" 
+                        width="100%" 
+                        height="100%" 
+                        style="border:0; min-height: 260px;" 
+                        allowfullscreen="" 
+                        loading="lazy">
+                    </iframe>
+                </div>
+            </div>
         </div>
     </div>
 </div>
