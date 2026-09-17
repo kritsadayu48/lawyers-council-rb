@@ -103,8 +103,8 @@
 
     <!-- Footer -->
     <footer class="bg-slate-900 text-gray-400 text-sm py-8 border-t-4 border-amber-600">
-        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
-            <div>
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
+            <div class="md:col-span-1">
                 <div class="flex items-center space-x-3 mb-3">
                     <img src="{{ asset('images/logo.png') }}" alt="ตราสัญลักษณ์สภาทนายความ" class="w-10 h-10 rounded-full bg-white p-0.5 object-contain">
                     <h3 class="text-white font-bold text-base">สภาทนายความจังหวัดราชบุรี</h3>
@@ -129,6 +129,25 @@
                     โทร: <a href="tel:0971952029" class="hover:text-amber-400">097-195-2029</a><br>
                     อีเมล: <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400">Lawyerscouncilrb@gmail.com</a>
                 </p>
+            </div>
+            <div>
+                <h3 class="text-white font-bold mb-3 text-base flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-simple text-amber-500"></i> สถิติการเข้าชม
+                </h3>
+                <div class="bg-slate-800/80 rounded-lg p-3 border border-slate-700/60 text-xs space-y-2">
+                    <div class="flex justify-between items-center text-gray-300">
+                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar text-amber-400 text-[10px]"></i> วันนี้:</span>
+                        <span class="font-bold text-white bg-slate-700/70 px-2 py-0.5 rounded">{{ number_format($visitorStats['today'] ?? 0) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300">
+                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar-days text-amber-400 text-[10px]"></i> เดือนนี้:</span>
+                        <span class="font-bold text-white bg-slate-700/70 px-2 py-0.5 rounded">{{ number_format($visitorStats['this_month'] ?? 0) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300 pt-1.5 border-t border-slate-700">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-users text-amber-400 text-[10px]"></i> เข้าชมทั้งหมด:</span>
+                        <span class="font-bold text-amber-400 text-sm">{{ number_format($visitorStats['total'] ?? 0) }}</span>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="text-center text-xs border-t border-slate-800 pt-4 text-gray-500">

@@ -74,7 +74,17 @@ Route::get('/robots.txt', function () {
     return response($content, 200)->header('Content-Type', 'text/plain');
 });
 
-// กลุ่มเครื่องมือผู้ดูแลระบบและซ่อมบำรุง (ต้องมีสิทธิ์ล็อกอิน Admin หรือใส่ token ลับ ?secret=...)
+// เครื่องมือสำหรับติดตั้ง/ซ่อมแซมตาราง visit_logs สำหรับนับสถิติ (รันครั้งเดียว)
+Route::get('/init-stats-table', function () {
+    $secret = env('MAINTENANCE_SECRET', 'LawyersRbAdmin2026!');
+    if (request('secret') !== $secret && !auth()->check()) {
+        abort(403);
+    }
+    \Illuminate\Support\Facades\Artisan::call('migrate --path=database/migrations/2026_09_17_000001_create_visit_logs_table.php --force');
+    return '<h3>✅ Visit Logs table ready!</h3><a href="/">กลับหน้าหลัก</a>';
+});
+
+// กลุ่มเครื่องมือผู้ดูแลระบบและซ่อมบำรุงขั้นสูง (ต้องมีสิทธิ์ล็อกอิน Admin หรือใส่ token ลับ ?secret=...)
 Route::group(['middleware' => function ($request, $next) {
     $secret = env('MAINTENANCE_SECRET', 'LawyersRbAdmin2026!');
     if ($request->query('secret') === $secret || auth()->check()) {
@@ -161,104 +171,5 @@ Route::group(['middleware' => function ($request, $next) {
         $lines = explode("\n", $content);
         $lastLines = array_slice($lines, -150);
         return '<pre style="background:#0f172a;color:#f8fafc;padding:20px;font-size:12px;overflow:auto;white-space:pre-wrap;">' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
-    });
-
-    Route::get('/check-upload', function () {
-        $results = [];
-        $results['upload_max_filesize'] = ini_get('upload_max_filesize');
-        $results['post_max_size'] = ini_get('post_max_size');
-        $results['memory_limit'] = ini_get('memory_limit');
-        $results['upload_tmp_dir'] = ini_get('upload_tmp_dir') ?: sys_get_temp_dir();
-        $results['upload_tmp_dir_writable'] = is_writable($results['upload_tmp_dir']);
-
-        $disk = \Livewire\Features\SupportFileUploads\FileUploadConfiguration::disk();
-        $results['livewire_disk'] = $disk;
-        $targetDir = \Illuminate\Support\Facades\Storage::disk($disk)->path('livewire-tmp');
-        $results['livewire_target_dir'] = $targetDir;
-
-        $storagePaths = [
-            storage_path('app'),
-            storage_path('app/private'),
-            storage_path('app/private/livewire-tmp'),
-            storage_path('app/public'),
-            storage_path('app/public/livewire-tmp'),
-            storage_path('app/public/law-documents'),
-            storage_path('app/public/news-covers'),
-            storage_path('app/public/news-galleries'),
-        ];
-
-        foreach ($storagePaths as $p) {
-            if (!is_dir($p)) {
-                @mkdir($p, 0777, true);
-            }
-            @chmod($p, 0777);
-            $results['paths'][$p] = [
-                'exists' => is_dir($p),
-                'writable' => is_writable($p),
-                'perms' => is_dir($p) ? substr(sprintf('%o', fileperms($p)), -4) : 'none',
-            ];
-        }
-
-        try {
-            if (!\Illuminate\Support\Facades\Schema::hasTable('cache')) {
-                \Illuminate\Support\Facades\DB::statement("
-                    CREATE TABLE IF NOT EXISTS `cache` (
-                      `key` varchar(255) NOT NULL,
-                      `value` mediumtext NOT NULL,
-                      `expiration` bigint NOT NULL,
-                      PRIMARY KEY (`key`),
-                      KEY `cache_expiration_index` (`expiration`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-                ");
-                $results['cache_table_created'] = 'SUCCESS';
-            } else {
-                $results['cache_table_created'] = 'ALREADY_EXISTS';
-            }
-
-            if (!\Illuminate\Support\Facades\Schema::hasTable('cache_locks')) {
-                \Illuminate\Support\Facades\DB::statement("
-                    CREATE TABLE IF NOT EXISTS `cache_locks` (
-                      `key` varchar(255) NOT NULL,
-                      `owner` varchar(255) NOT NULL,
-                      `expiration` bigint NOT NULL,
-                      PRIMARY KEY (`key`),
-                      KEY `cache_locks_expiration_index` (`expiration`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-                ");
-                $results['cache_locks_table_created'] = 'SUCCESS';
-            } else {
-                $results['cache_locks_table_created'] = 'ALREADY_EXISTS';
-            }
-        } catch (\Throwable $e) {
-            $results['cache_table_error'] = $e->getMessage();
-        }
-
-        try {
-            $testFile = $targetDir . '/test_' . time() . '.txt';
-            file_put_contents($testFile, 'test');
-            $results['write_test'] = file_exists($testFile) ? 'SUCCESS' : 'FAILED';
-            @unlink($testFile);
-        } catch (\Throwable $e) {
-            $results['write_test_error'] = $e->getMessage();
-        }
-
-        return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    });
-
-    Route::get('/migrate-db', function () {
-        try {
-            \Illuminate\Support\Facades\Artisan::call('migrate --force');
-            \Illuminate\Support\Facades\Artisan::call('db:seed --class=DemoDataSeeder --force');
-            \App\Models\User::firstOrCreate(
-                ['email' => 'feemubankru48@gmail.com'],
-                [
-                    'name' => 'Fee',
-                    'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                ]
-            );
-            return '<div style="font-family:sans-serif;padding:30px;text-align:center;"><h2>🎉 ติดตั้งฐานข้อมูล MySQL สำเร็จสมบูรณ์ 100%!</h2><p>ระบบสร้างตาราง นำเข้าหมวดหมู่ ข่าวสาร ประกาศ เอกสารกฎหมาย และบัญชีแอดมินลง MySQL เรียบร้อยแล้ว</p><a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#d97706;color:#fff;text-decoration:none;border-radius:6px;">กลับสู่หน้าแรก</a></div>';
-        } catch (\Throwable $e) {
-            return '<div style="font-family:sans-serif;padding:30px;color:#b91c1c;text-align:center;"><h2>❌ เกิดข้อผิดพลาดในการเชื่อมต่อ MySQL</h2><p style="background:#fee2e2;padding:15px;border-radius:6px;display:inline-block;text-align:left;">' . htmlspecialchars($e->getMessage()) . '</p><p>โปรดตรวจสอบ DB_DATABASE, DB_USERNAME และ DB_PASSWORD ในไฟล์ .env ให้ถูกต้อง</p></div>';
-        }
     });
 });
