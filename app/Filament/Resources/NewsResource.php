@@ -65,27 +65,24 @@ class NewsResource extends Resource
                 ->helperText('💡 กดเครื่องหมาย + ด้านข้างเพื่อพิมพ์สร้างหมวดหมู่ใหม่ได้ทันที (หรือเลือก "ประกาศและหนังสือเวียน" เพื่อแสดงบนกระดานประกาศหน้าแรก)'),
             TextInput::make('title')
                 ->label('หัวข้อข่าว / หัวข้อประกาศ')
+                ->placeholder('พิมพ์หัวข้อข่าวสารหรือประกาศที่นี่')
                 ->required()
-                ->live(onBlur: true)
-                ->afterStateUpdated(function (Set $set, ?string $state, ?string $operation) {
-                    if ($operation === 'create' && filled($state)) {
-                        $slug = Str::slug($state);
-                        if (empty($slug)) {
-                            $slug = 'post-' . date('Ymd-His');
-                        }
-                        $set('slug', $slug);
-                    }
-                }),
-            TextInput::make('slug')
-                ->label('Slug (ชื่อลิงก์ URL)')
-                ->required()
-                ->unique(ignoreRecord: true),
+                ->columnSpanFull(),
             DatePicker::make('published_at')
                 ->label('วันที่ลงข่าว / วันที่ออกประกาศ')
                 ->default(now()),
             Toggle::make('is_published')
                 ->label('เผยแพร่ทันที')
                 ->default(true),
+            Forms\Components\Section::make('ตั้งค่ารหัสลิงก์ URL (ระบบสร้างให้อัตโนมัติ / ไม่จำเป็นต้องกรอก)')
+                ->collapsed()
+                ->schema([
+                    TextInput::make('slug')
+                        ->label('รหัสลิงก์ URL (Slug)')
+                        ->placeholder('ระบบสร้างให้อัตโนมัติจากวันที่และเวลา')
+                        ->helperText('ระบบจะสร้างให้อัตโนมัติในฐานข้อมูล แอดมินทั่วไปสามารถข้ามช่องนี้ได้เลย')
+                        ->unique(ignoreRecord: true),
+                ]),
         FileUpload::make('cover_image')
             ->label('รูปภาพหน้าปกข่าว')
             ->directory('news-covers')
