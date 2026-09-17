@@ -51,8 +51,8 @@
 
     <!-- Topbar แถบข้อมูลติดต่อด้านบนสุด -->
     <div class="bg-slate-900 text-gray-300 text-xs py-2 px-4 border-b border-slate-800">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-            <div class="flex items-center space-x-4">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-center sm:text-left">
+            <div class="flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1">
                 <a href="tel:0971952029" class="hover:text-amber-400 transition flex items-center">
                     <i class="fa-solid fa-phone mr-1.5 text-amber-500"></i> 097-195-2029
                 </a>
@@ -68,37 +68,69 @@
 
     <!-- Header & Logo -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-4">
-            <a href="{{ route('home') }}" class="flex items-center space-x-3 sm:space-x-4 group">
-                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white shadow-md border border-slate-200 group-hover:shadow-lg transition shrink-0 p-0.5">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-3">
+            <a href="{{ route('home') }}" class="flex items-center space-x-3 sm:space-x-4 group min-w-0">
+                <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white shadow-md border border-slate-200 group-hover:shadow-lg transition shrink-0 p-0.5">
                     <img src="{{ asset('images/logo.png') }}" alt="ตราสัญลักษณ์สภาทนายความในพระบรมราชูปถัมภ์" class="w-full h-full object-contain">
                 </div>
-                <div>
-                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">สภาทนายความจังหวัดราชบุรี</h1>
-                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium tracking-wide">RATCHABURI LAWYERS COUNCIL</p>
+                <div class="min-w-0">
+                    <h1 class="text-base sm:text-xl font-bold text-slate-900 leading-tight truncate sm:whitespace-normal">สภาทนายความจังหวัดราชบุรี</h1>
+                    <p class="text-[10px] sm:text-xs text-slate-500 font-medium tracking-wide truncate sm:whitespace-normal">RATCHABURI LAWYERS COUNCIL</p>
                 </div>
             </a>
             
-            <div class="text-right hidden md:block">
+            <div class="text-right hidden md:block shrink-0">
                 <p class="text-xs text-slate-500">ยึดมั่นในความยุติธรรม ปกป้องสิทธิและเสรีภาพของประชาชน</p>
             </div>
 
             <!-- Mobile Menu Button -->
-            <button id="mobileMenuBtn" type="button" class="md:hidden p-2 text-slate-700 hover:text-amber-600 text-xl focus:outline-none" aria-label="Toggle navigation">
-                <i class="fa-solid fa-bars"></i>
+            <button id="mobileMenuBtn" type="button" class="md:hidden p-2 text-slate-700 hover:text-amber-600 text-xl focus:outline-none rounded-lg hover:bg-slate-100 transition shrink-0" aria-label="Toggle navigation">
+                <i id="mobileMenuIcon" class="fa-solid fa-bars transition-transform duration-200"></i>
             </button>
         </div>
 
-        <!-- Navbar Menu -->
-        <nav class="bg-slate-800 text-white shadow-inner">
-            <div id="navMenu" class="hidden md:flex max-w-7xl mx-auto px-4 flex-col md:flex-row md:items-center space-y-1 md:space-y-0 md:space-x-1 sm:space-x-2 text-sm font-medium py-2 md:py-0">
-                <a href="{{ route('home') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('home') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-house mr-1"></i> หน้าแรก</a>
-                <a href="{{ route('about') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-users mr-1"></i> เกี่ยวกับองค์กร/โครงสร้าง</a>
-                <a href="{{ route('news.index') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-newspaper mr-1"></i> ข่าวสารและกิจกรรม</a>
-                <a href="{{ route('documents.index') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('documents.*') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-book mr-1"></i> คลังกฎหมายและแบบฟอร์ม</a>
-                <a href="{{ route('contact') }}" class="py-3 px-3 rounded md:rounded-none transition {{ request()->routeIs('contact') ? 'bg-amber-600 text-white' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-address-book mr-1"></i> ติดต่อเรา</a>
+        <!-- Desktop Navbar Menu (Visible on Desktop Only) -->
+        <nav class="hidden md:block bg-slate-800 text-white shadow-inner">
+            <div class="max-w-7xl mx-auto px-4 flex items-center space-x-1 sm:space-x-2 text-sm font-medium">
+                <a href="{{ route('home') }}" class="py-3 px-3 transition {{ request()->routeIs('home') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-house mr-1"></i> หน้าแรก</a>
+                <a href="{{ route('about') }}" class="py-3 px-3 transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-users mr-1"></i> เกี่ยวกับองค์กร/โครงสร้าง</a>
+                <a href="{{ route('news.index') }}" class="py-3 px-3 transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-newspaper mr-1"></i> ข่าวสารและกิจกรรม</a>
+                <a href="{{ route('documents.index') }}" class="py-3 px-3 transition {{ request()->routeIs('documents.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-book mr-1"></i> คลังกฎหมายและแบบฟอร์ม</a>
+                <a href="{{ route('contact') }}" class="py-3 px-3 transition {{ request()->routeIs('contact') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-address-book mr-1"></i> ติดต่อเรา</a>
             </div>
         </nav>
+
+        <!-- Mobile Navigation Menu (Dropdown on Mobile Only) -->
+        <div id="mobileMenu" class="hidden md:hidden bg-slate-900 border-t border-slate-800 text-white px-4 py-3 space-y-1.5 shadow-2xl">
+            <a href="{{ route('home') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('home') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fa-solid fa-house w-5 text-center text-amber-400"></i>
+                <span>หน้าแรก</span>
+            </a>
+            <a href="{{ route('about') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fa-solid fa-users w-5 text-center text-amber-400"></i>
+                <span>เกี่ยวกับองค์กร/โครงสร้าง</span>
+            </a>
+            <a href="{{ route('news.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fa-solid fa-newspaper w-5 text-center text-amber-400"></i>
+                <span>ข่าวสารและกิจกรรม</span>
+            </a>
+            <a href="{{ route('documents.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('documents.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fa-solid fa-book w-5 text-center text-amber-400"></i>
+                <span>คลังกฎหมายและแบบฟอร์ม</span>
+            </a>
+            <a href="{{ route('contact') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('contact') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fa-solid fa-address-book w-5 text-center text-amber-400"></i>
+                <span>ติดต่อเรา</span>
+            </a>
+            <div class="pt-3 mt-2 border-t border-slate-800 flex items-center justify-between text-xs text-gray-400 px-3">
+                <a href="tel:0971952029" class="hover:text-amber-400 flex items-center gap-1.5 py-1">
+                    <i class="fa-solid fa-phone text-amber-500"></i> 097-195-2029
+                </a>
+                <a href="/admin" class="hover:text-amber-400 flex items-center gap-1.5 py-1 text-amber-400">
+                    <i class="fa-solid fa-lock"></i> เข้าสู่ระบบแอดมิน
+                </a>
+            </div>
+        </div>
     </header>
 
     <!-- Main Content -->
@@ -163,10 +195,20 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var btn = document.getElementById('mobileMenuBtn');
-            var menu = document.getElementById('navMenu');
+            var menu = document.getElementById('mobileMenu');
+            var icon = document.getElementById('mobileMenuIcon');
             if (btn && menu) {
                 btn.addEventListener('click', function() {
                     menu.classList.toggle('hidden');
+                    if (icon) {
+                        if (menu.classList.contains('hidden')) {
+                            icon.classList.remove('fa-xmark');
+                            icon.classList.add('fa-bars');
+                        } else {
+                            icon.classList.remove('fa-bars');
+                            icon.classList.add('fa-xmark');
+                        }
+                    }
                 });
             }
         });

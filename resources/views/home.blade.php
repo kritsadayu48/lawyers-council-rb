@@ -9,41 +9,41 @@
     <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl text-white shadow-xl overflow-hidden border border-slate-700/50">
         <div class="grid grid-cols-1 lg:grid-cols-12 items-center">
             <!-- Left Info -->
-            <div class="lg:col-span-7 p-8 md:p-10 z-10">
+            <div class="lg:col-span-7 p-6 sm:p-8 md:p-10 z-10">
                 <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold px-3 py-1 rounded-full mb-4">
                     <i class="fa-solid fa-scale-balanced"></i> สภาทนายความในพระบรมราชูปถัมภ์ จังหวัดราชบุรี
                 </div>
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight tracking-tight">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight tracking-tight">
                     สภาทนายความ<span class="text-amber-500">จังหวัดราชบุรี</span>
                 </h2>
                 <p class="text-gray-300 text-sm md:text-base leading-relaxed mt-3 mb-6 max-w-xl">
                     ศูนย์รวมข้อมูลข่าวสาร ระเบียบข้อบังคับสภาทนายความ คลังเอกสารทางกฎหมาย และการให้บริการปรึกษาอรรถคดีแก่ประชาชนผู้ยากไร้เพื่อผดุงความยุติธรรมในสังคม
                 </p>
-                <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('documents.index') }}" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-5 py-3 rounded-lg shadow-lg shadow-amber-600/30 transition flex items-center gap-2">
+                <div class="flex flex-wrap gap-2.5 sm:gap-3">
+                    <a href="{{ route('documents.index') }}" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg shadow-lg shadow-amber-600/30 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-folder-open"></i> คลังเอกสารกฎหมาย
                     </a>
-                    <a href="{{ route('news.index') }}" class="bg-slate-700/80 hover:bg-slate-700 text-white text-sm font-semibold px-5 py-3 rounded-lg border border-slate-600 transition flex items-center gap-2">
+                    <a href="{{ route('news.index') }}" class="bg-slate-700/80 hover:bg-slate-700 text-white text-sm font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg border border-slate-600 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-newspaper"></i> ข่าวสารและกิจกรรม
                     </a>
-                    <a href="tel:0971952029" class="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-3 rounded-lg border border-white/20 transition flex items-center gap-2">
+                    <a href="tel:0971952029" class="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-white/20 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-phone text-amber-400"></i> โทรปรึกษา
                     </a>
                 </div>
 
                 <!-- Stats Bar -->
-                <div class="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-slate-700/60 text-center sm:text-left">
+                <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-8 pt-6 border-t border-slate-700/60 text-center sm:text-left">
                     <div>
-                        <div class="text-2xl font-bold text-amber-400">{{ $totalDocuments }}+</div>
+                        <div class="text-xl sm:text-2xl font-bold text-amber-400">{{ $totalDocuments }}+</div>
                         <div class="text-[11px] text-gray-400 font-medium">เอกสารในระบบ</div>
                     </div>
                     <div>
-                        <div class="text-2xl font-bold text-amber-400">{{ $totalNews }}</div>
-                        <div class="text-[11px] text-gray-400 font-medium">ข่าวสารและกิจกรรม</div>
+                        <div class="text-xl sm:text-2xl font-bold text-amber-400">{{ $totalNews }}</div>
+                        <div class="text-[11px] text-gray-400 font-medium">ข่าวสาร/กิจกรรม</div>
                     </div>
                     <div>
-                        <div class="text-2xl font-bold text-amber-400">จ. - ศ.</div>
-                        <div class="text-[11px] text-gray-400 font-medium">ทนายความอาสาประจำศาล</div>
+                        <div class="text-xl sm:text-2xl font-bold text-amber-400">จ. - ศ.</div>
+                        <div class="text-[11px] text-gray-400 font-medium">ทนายความอาสา</div>
                     </div>
                 </div>
             </div>
