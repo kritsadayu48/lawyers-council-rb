@@ -15,7 +15,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
 
 class LawDocumentResource extends Resource
 {
@@ -63,12 +66,37 @@ class LawDocumentResource extends Resource
 {
     return $table
         ->columns([
-            TextColumn::make('title')->label('ชื่อเอกสาร')->searchable(),
-            TextColumn::make('category.name')->label('หมวดหมู่')->badge(),
-            TextColumn::make('document_no')->label('เลขที่ฉบับ'),
+            TextColumn::make('title')->label('ชื่อเอกสาร')->searchable()->sortable(),
+            TextColumn::make('category.name')->label('หมวดหมู่')->badge()->sortable(),
+            TextColumn::make('document_no')->label('เลขที่ฉบับ')->searchable()->sortable(),
             TextColumn::make('year_be')->label('ปี พ.ศ.')->sortable(),
             TextColumn::make('download_count')->label('ดาวน์โหลด (ครั้ง)')->sortable(),
-            TextColumn::make('created_at')->label('วันที่เพิ่ม')->dateTime('d/m/Y'),
+            TextColumn::make('created_at')->label('วันที่เพิ่ม')->dateTime('d/m/Y H:i')->sortable(),
+        ])
+        ->defaultSort('created_at', 'desc')
+        ->filters([
+            SelectFilter::make('category_id')
+                ->label('กรองตามหมวดหมู่')
+                ->relationship('category', 'name', fn ($query) => $query->where('type', 'law_document')),
+            SelectFilter::make('year_be')
+                ->label('กรองตามปี พ.ศ.')
+                ->options(fn () => LawDocument::query()->whereNotNull('year_be')->where('year_be', '!=', '')->distinct()->orderBy('year_be', 'desc')->pluck('year_be', 'year_be')->toArray()),
+            Filter::make('created_at')
+                ->form([
+                    DatePicker::make('created_from')->label('วันที่เพิ่มตั้งแต่'),
+                    DatePicker::make('created_until')->label('ถึงวันที่'),
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when(
+                            $data['created_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                        )
+                        ->when(
+                            $data['created_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                        );
+                }),
         ])
         ->actions([
             Tables\Actions\EditAction::make(),

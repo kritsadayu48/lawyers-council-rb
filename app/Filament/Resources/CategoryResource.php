@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Closure;
@@ -25,7 +26,7 @@ class CategoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationLabel = 'หมวดหมู่ทั้งหมด';
+    protected static ?string $navigationLabel = 'หมวดหมู่';
 
     protected static ?string $modelLabel = 'หมวดหมู่';
 
@@ -57,12 +58,21 @@ class CategoryResource extends Resource
 {
     return $table
         ->columns([
-            TextColumn::make('name')->label('ชื่อหมวดหมู่')->searchable(),
+            TextColumn::make('name')->label('ชื่อหมวดหมู่')->searchable()->sortable(),
             TextColumn::make('type')->label('ประเภท')->badge()->color(fn (string $state): string => match ($state) {
                 'news' => 'info',
                 'law_document' => 'success',
-            }),
-            TextColumn::make('created_at')->label('สร้างเมื่อ')->dateTime('d/m/Y'),
+            })->sortable(),
+            TextColumn::make('created_at')->label('สร้างเมื่อ')->dateTime('d/m/Y')->sortable(),
+        ])
+        ->defaultSort('created_at', 'desc')
+        ->filters([
+            SelectFilter::make('type')
+                ->label('กรองตามประเภท')
+                ->options([
+                    'news' => 'ข่าวสาร / กิจกรรม',
+                    'law_document' => 'คลังกฎหมาย / แบบฟอร์ม',
+                ]),
         ])
         ->actions([
             Tables\Actions\EditAction::make(),

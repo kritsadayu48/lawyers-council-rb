@@ -23,6 +23,9 @@ use Illuminate\Support\Str;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\Filter;
 
 class NewsResource extends Resource
 {
@@ -93,15 +96,53 @@ class NewsResource extends Resource
     return $table
         ->columns([
             ImageColumn::make('cover_image')->label('รูปปก')->circular(),
-            TextColumn::make('title')->label('หัวข้อข่าว')->limit(40)->searchable(),
-            TextColumn::make('category.name')->label('หมวดหมู่')->badge(),
-            IconColumn::make('is_published')->label('สถานะ')->boolean(),
-            TextColumn::make('published_at')->label('วันที่ลงข่าว')->date('d/m/Y'),
+            TextColumn::make('title')->label('หัวข้อข่าว')->limit(40)->searchable()->sortable(),
+            TextColumn::make('category.name')->label('หมวดหมู่')->badge()->sortable(),
+            IconColumn::make('is_published')->label('สถานะ')->boolean()->sortable(),
+            TextColumn::make('published_at')->label('วันที่ลงข่าว')->date('d/m/Y')->sortable(),
+            TextColumn::make('created_at')->label('วันที่สร้างข่าว')->dateTime('d/m/Y H:i')->sortable()->toggleable(isToggledHiddenByDefault: false),
         ])
+        ->defaultSort('published_at', 'desc')
         ->filters([
-            Tables\Filters\SelectFilter::make('category_id')
+            SelectFilter::make('category_id')
                 ->label('กรองตามหมวดหมู่')
                 ->relationship('category', 'name', fn ($query) => $query->where('type', 'news')),
+            TernaryFilter::make('is_published')
+                ->label('สถานะการเผยแพร่')
+                ->trueLabel('เผยแพร่แล้ว')
+                ->falseLabel('ฉบับร่าง'),
+            Filter::make('published_at')
+                ->form([
+                    DatePicker::make('published_from')->label('วันที่ลงข่าวตั้งแต่'),
+                    DatePicker::make('published_until')->label('ถึงวันที่'),
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when(
+                            $data['published_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('published_at', '>=', $date),
+                        )
+                        ->when(
+                            $data['published_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('published_at', '<=', $date),
+                        );
+                }),
+            Filter::make('created_at')
+                ->form([
+                    DatePicker::make('created_from')->label('วันที่สร้างข่าวตั้งแต่'),
+                    DatePicker::make('created_until')->label('ถึงวันที่'),
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when(
+                            $data['created_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                        )
+                        ->when(
+                            $data['created_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                        );
+                }),
         ])
         ->actions([
             Tables\Actions\EditAction::make(),
