@@ -52,6 +52,21 @@
             </div>
 
             <div class="flex items-start space-x-4">
+                <div class="w-10 h-10 bg-blue-100 text-[#1877F2] rounded-lg flex items-center justify-center text-xl shrink-0 shadow-sm">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-800 text-sm">เพจเฟซบุ๊กทางการ (Facebook Fanpage)</h4>
+                    <p class="text-xs text-slate-600 mt-1">
+                        <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center gap-1.5 mt-0.5 group">
+                            <span>สภาทนายความจังหวัดราชบุรี</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-start space-x-4">
                 <div class="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center text-lg shrink-0">
                     <i class="fa-solid fa-clock"></i>
                 </div>

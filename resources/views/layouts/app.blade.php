@@ -59,6 +59,9 @@
                 <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400 transition flex items-center">
                     <i class="fa-solid fa-envelope mr-1.5 text-amber-500"></i> Lawyerscouncilrb@gmail.com
                 </a>
+                <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 transition flex items-center text-blue-300">
+                    <i class="fa-brands fa-facebook mr-1.5 text-[#1877F2] text-sm"></i> Facebook สภาทนายความจังหวัดราชบุรี
+                </a>
             </div>
             <div>
                 <a href="/admin" class="hover:text-amber-400 transition"><i class="fa-solid fa-lock mr-1"></i> สำหรับเจ้าหน้าที่ (เข้าสู่ระบบ)</a>
@@ -164,7 +167,10 @@
                 <p class="text-xs text-gray-400 leading-relaxed">
                     33 ถนนเสือป่า ซอย 4 ต.หน้าเมือง อ.เมืองราชบุรี จ.ราชบุรี 70000<br>
                     โทร: <a href="tel:0971952029" class="hover:text-amber-400">097-195-2029</a><br>
-                    อีเมล: <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400">Lawyerscouncilrb@gmail.com</a>
+                    อีเมล: <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400">Lawyerscouncilrb@gmail.com</a><br>
+                    <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 mt-1 font-medium">
+                        <i class="fa-brands fa-facebook text-base text-[#1877F2]"></i> เพจเฟซบุ๊กทางการ
+                    </a>
                 </p>
             </div>
             <div>

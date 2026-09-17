@@ -215,6 +215,9 @@
                     <a href="tel:0971952029" class="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-white/20 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-phone text-amber-400"></i> โทรปรึกษา: 097-195-2029
                     </a>
+                    <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="bg-[#1877F2] hover:bg-[#166fe5] text-white text-sm font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-facebook text-base"></i> เพจ Facebook
+                    </a>
                 </div>
             </div>
 
@@ -460,7 +463,39 @@
         </div>
     </div>
 
-    <!-- 5. เครือข่ายหน่วยงานในกระบวนการยุติธรรม (Justice Network Partners) -->
+    <!-- 5. Official Facebook Fanpage Section (เพจเฟซบุ๊กทางการ สภาทนายความจังหวัดราชบุรี) -->
+    <div class="bg-gradient-to-r from-blue-900 via-slate-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white border border-blue-800/50 shadow-xl overflow-hidden relative">
+        <div class="absolute -right-10 -bottom-10 opacity-10 text-[#1877F2] text-[180px] pointer-events-none">
+            <i class="fa-brands fa-facebook"></i>
+        </div>
+        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4 sm:gap-5 text-center sm:text-left">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#1877F2] text-white flex items-center justify-center text-3xl sm:text-4xl shadow-lg shadow-blue-500/30 shrink-0">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </div>
+                <div>
+                    <div class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-300 bg-blue-950/80 border border-blue-700/60 px-2.5 py-0.5 rounded-full mb-1">
+                        <i class="fa-solid fa-circle-check text-blue-400"></i> ช่องทางโซเชียลมีเดียทางการ
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-bold text-white leading-tight">
+                        เพจเฟซบุ๊กทางการ: สภาทนายความจังหวัดราชบุรี
+                    </h3>
+                    <p class="text-xs sm:text-sm text-gray-300 mt-1 max-w-xl leading-relaxed">
+                        ติดตามข้อมูลข่าวสาร ภาพบรรยากาศกิจกรรม อบรมวิชาการ และสาระความรู้กฎหมายที่เป็นประโยชน์แก่ประชาชนและเพื่อนสมาชิกทนายความได้ทุกวัน
+                    </p>
+                </div>
+            </div>
+            <div class="shrink-0 w-full md:w-auto">
+                <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="w-full md:w-auto bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg shadow-blue-600/40 transition-all flex items-center justify-center gap-2 group">
+                    <i class="fa-brands fa-facebook text-lg"></i>
+                    <span>กดติดตามเพจ Facebook</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs group-hover:translate-x-0.5 transition-transform"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. เครือข่ายหน่วยงานในกระบวนการยุติธรรม (Justice Network Partners) -->
     <div class="bg-slate-100/70 p-6 rounded-xl border border-slate-200/80">
         <h3 class="text-sm font-bold text-slate-700 mb-4 text-center uppercase tracking-wide">
             <i class="fa-solid fa-landmark text-amber-600 mr-1.5"></i> เครือข่ายหน่วยงานในกระบวนการยุติธรรม
