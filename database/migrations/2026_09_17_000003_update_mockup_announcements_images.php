@@ -20,7 +20,7 @@ return new class extends Migration
         // อัปเดตประกาศที่ 1: กำหนดการยื่นคำขอต่ออายุใบอนุญาตให้เป็นทนายความ
         News::where('slug', 'announcement-lawyer-license-renewal-2026')
             ->update([
-                'cover_image' => 'news-covers/announcement-meeting-2026.jpg',
+                'cover_image' => 'news-covers/grand-announcement-2026.jpg',
                 'gallery_images' => [
                     'news-galleries/announcement-g1.jpg',
                     'news-galleries/announcement-g2.jpg',

@@ -5,21 +5,207 @@
 @section('content')
 <div class="space-y-10">
 
-    <!-- 1. Hero Showcase Section -->
-    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl text-white shadow-xl overflow-hidden border border-slate-700/50">
-        <div class="grid grid-cols-1 lg:grid-cols-12 items-center">
+    <!-- 1. Grand Full-Width Announcement Banner Slider (แบนเนอร์ภาพประกาศขนาดใหญ่เด่นชัดแบบ lawyerscouncil.or.th) -->
+    @if(isset($heroSlides) && $heroSlides->count() > 0)
+    <div id="grandHeroCarousel" class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/80 bg-slate-950 group select-none">
+        <!-- Slides Container -->
+        <div class="relative h-[280px] sm:h-[400px] md:h-[480px] lg:h-[540px] w-full overflow-hidden">
+            @foreach($heroSlides as $index => $slide)
+            @php
+                $isAnnouncement = $slide->category && (
+                    str_contains($slide->category->slug, 'announcement') ||
+                    str_contains($slide->category->slug, 'official') ||
+                    str_contains($slide->category->name, 'ประกาศ')
+                );
+            @endphp
+            <div class="grand-slide absolute inset-0 transition-all duration-700 ease-in-out {{ $index === 0 ? 'opacity-100 scale-100 z-10 pointer-events-auto' : 'opacity-0 scale-95 z-0 pointer-events-none' }}" data-index="{{ $index }}">
+                <a href="{{ route('news.show', $slide) }}" class="block w-full h-full relative group/item focus:outline-none">
+                    @if($slide->cover_image)
+                        <!-- Ambient Blur Backdrop on Wide Screens -->
+                        <div class="absolute inset-0 bg-cover bg-center blur-2xl opacity-30 scale-110" style="background-image: url('{{ asset('storage/' . $slide->cover_image) }}');"></div>
+                        <!-- Main Sharp Banner Image -->
+                        <img src="{{ asset('storage/' . $slide->cover_image) }}" alt="{{ $slide->title }}" class="relative w-full h-full object-contain md:object-cover mx-auto transition-transform duration-700 group-hover/item:scale-[1.02]">
+                    @else
+                        <div class="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex items-center justify-center text-gray-500">
+                            <i class="fa-regular fa-image text-6xl text-slate-700"></i>
+                        </div>
+                    @endif
+
+                    <!-- Gradient Overlay for High Contrast Text Readability -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+
+                    <!-- Top Bar Badges -->
+                    <div class="absolute top-4 sm:top-6 left-4 sm:left-6 flex items-center gap-2 z-20">
+                        @if($isAnnouncement)
+                            <span class="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-lg border border-amber-300/40">
+                                <i class="fa-solid fa-bullhorn text-xs"></i> ประกาศสภาทนายความ
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-lg border border-amber-300/40">
+                                <i class="fa-solid fa-star text-xs"></i> ข่าวเด่นและกิจกรรม
+                            </span>
+                        @endif
+                    </div>
+
+                    <!-- Slide Counter Badge -->
+                    <div class="absolute top-4 sm:top-6 right-4 sm:right-6 bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium px-3.5 py-1 rounded-full shadow-lg z-20">
+                        <span class="text-amber-400 font-bold">{{ $index + 1 }}</span> / {{ $heroSlides->count() }}
+                    </div>
+
+                    <!-- Bottom Caption Bar -->
+                    <div class="absolute bottom-6 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 text-white z-20">
+                        <div class="max-w-4xl">
+                            <div class="flex items-center gap-2 text-xs sm:text-sm text-amber-400 font-semibold mb-2 drop-shadow">
+                                <span><i class="fa-regular fa-calendar mr-1.5"></i> {{ optional($slide->published_at)->format('d/m/Y') ?? $slide->created_at->format('d/m/Y') }}</span>
+                                <span>•</span>
+                                <span class="text-gray-200">{{ $slide->category->name ?? 'ทั่วไป' }}</span>
+                            </div>
+                            <h2 class="text-base sm:text-2xl md:text-3xl font-extrabold text-white leading-tight drop-shadow-md line-clamp-2 group-hover/item:text-amber-400 transition-colors duration-200">
+                                {{ $slide->title }}
+                            </h2>
+                            <div class="mt-3 flex items-center gap-2">
+                                <span class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2 rounded-lg shadow-lg transition">
+                                    อ่านรายละเอียดประกาศ <i class="fa-solid fa-arrow-right text-xs"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            @endforeach
+        </div>
+
+        @if($heroSlides->count() > 1)
+        <!-- Prominent Navigation Arrows (แบบ lawyerscouncil.or.th) -->
+        <button type="button" id="grandPrevBtn" class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-black/50 hover:bg-amber-600 text-white flex items-center justify-center text-lg sm:text-2xl backdrop-blur-md border border-white/20 transition-all shadow-2xl z-30 focus:outline-none" aria-label="Previous Slide">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button type="button" id="grandNextBtn" class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-black/50 hover:bg-amber-600 text-white flex items-center justify-center text-lg sm:text-2xl backdrop-blur-md border border-white/20 transition-all shadow-2xl z-30 focus:outline-none" aria-label="Next Slide">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <!-- Slide Indicators / Dots -->
+        <div class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30 bg-black/50 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15">
+            @foreach($heroSlides as $dotIndex => $slide)
+            <button type="button" class="grand-dot h-2 rounded-full transition-all duration-300 {{ $dotIndex === 0 ? 'w-7 bg-amber-500' : 'w-2.5 bg-white/50 hover:bg-white/80' }}" data-index="{{ $dotIndex }}" aria-label="Go to slide {{ $dotIndex + 1 }}"></button>
+            @endforeach
+        </div>
+        @endif
+    </div>
+
+    <!-- Carousel Logic Script -->
+    @if($heroSlides->count() > 1)
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const carousel = document.getElementById('grandHeroCarousel');
+            if (!carousel) return;
+
+            const slides = carousel.querySelectorAll('.grand-slide');
+            const dots = carousel.querySelectorAll('.grand-dot');
+            const prevBtn = document.getElementById('grandPrevBtn');
+            const nextBtn = document.getElementById('grandNextBtn');
+            const total = slides.length;
+            let currentIndex = 0;
+            let timer = null;
+            const INTERVAL_MS = 5000; // 5 seconds
+
+            function showSlide(index) {
+                if (index < 0) index = total - 1;
+                if (index >= total) index = 0;
+                currentIndex = index;
+
+                slides.forEach((slide, i) => {
+                    if (i === currentIndex) {
+                        slide.classList.remove('opacity-0', 'scale-95', 'z-0', 'pointer-events-none');
+                        slide.classList.add('opacity-100', 'scale-100', 'z-10', 'pointer-events-auto');
+                    } else {
+                        slide.classList.remove('opacity-100', 'scale-100', 'z-10', 'pointer-events-auto');
+                        slide.classList.add('opacity-0', 'scale-95', 'z-0', 'pointer-events-none');
+                    }
+                });
+
+                dots.forEach((dot, i) => {
+                    if (i === currentIndex) {
+                        dot.classList.remove('w-2.5', 'bg-white/50');
+                        dot.classList.add('w-7', 'bg-amber-500');
+                    } else {
+                        dot.classList.remove('w-7', 'bg-amber-500');
+                        dot.classList.add('w-2.5', 'bg-white/50');
+                    }
+                });
+            }
+
+            function nextSlide() {
+                showSlide(currentIndex + 1);
+            }
+
+            function prevSlide() {
+                showSlide(currentIndex - 1);
+            }
+
+            function startTimer() {
+                stopTimer();
+                timer = setInterval(nextSlide, INTERVAL_MS);
+            }
+
+            function stopTimer() {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    nextSlide();
+                    startTimer();
+                });
+            }
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    prevSlide();
+                    startTimer();
+                });
+            }
+
+            dots.forEach(function(dot) {
+                dot.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(dot.getAttribute('data-index'), 10);
+                    showSlide(idx);
+                    startTimer();
+                });
+            });
+
+            carousel.addEventListener('mouseenter', stopTimer);
+            carousel.addEventListener('mouseleave', startTimer);
+            carousel.addEventListener('touchstart', stopTimer, { passive: true });
+            carousel.addEventListener('touchend', startTimer, { passive: true });
+
+            startTimer();
+        });
+    </script>
+    @endif
+    @endif
+
+    <!-- 2. Welcome & Organization Overview Bar (แถบข้อมูลองค์กรและบริการด่วน) -->
+    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl text-white shadow-xl overflow-hidden border border-slate-700/50 p-6 sm:p-8 md:p-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <!-- Left Info -->
-            <div class="lg:col-span-7 p-6 sm:p-8 md:p-10 z-10">
-                <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold px-3 py-1 rounded-full mb-4">
+            <div class="lg:col-span-8">
+                <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold px-3 py-1 rounded-full mb-3">
                     <i class="fa-solid fa-scale-balanced"></i> สภาทนายความในพระบรมราชูปถัมภ์ จังหวัดราชบุรี
                 </div>
-                <h2 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight tracking-tight">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight tracking-tight">
                     สภาทนายความ<span class="text-amber-500">จังหวัดราชบุรี</span>
                 </h2>
-                <p class="text-gray-300 text-sm md:text-base leading-relaxed mt-3 mb-6 max-w-xl">
+                <p class="text-gray-300 text-sm md:text-base leading-relaxed mt-2.5 max-w-2xl">
                     ศูนย์รวมข้อมูลข่าวสาร ระเบียบข้อบังคับสภาทนายความ คลังเอกสารทางกฎหมาย และการให้บริการปรึกษาอรรถคดีแก่ประชาชนผู้ยากไร้เพื่อผดุงความยุติธรรมในสังคม
                 </p>
-                <div class="flex flex-wrap gap-2.5 sm:gap-3">
+                <div class="flex flex-wrap gap-2.5 sm:gap-3 mt-5">
                     <a href="{{ route('documents.index') }}" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg shadow-lg shadow-amber-600/30 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-folder-open"></i> คลังเอกสารกฎหมาย
                     </a>
@@ -27,206 +213,25 @@
                         <i class="fa-solid fa-newspaper"></i> ข่าวสารและกิจกรรม
                     </a>
                     <a href="tel:0971952029" class="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-white/20 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-phone text-amber-400"></i> โทรปรึกษา
+                        <i class="fa-solid fa-phone text-amber-400"></i> โทรปรึกษา: 097-195-2029
                     </a>
-                </div>
-
-                <!-- Stats Bar -->
-                <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-8 pt-6 border-t border-slate-700/60 text-center sm:text-left">
-                    <div>
-                        <div class="text-xl sm:text-2xl font-bold text-amber-400">{{ $totalDocuments }}+</div>
-                        <div class="text-[11px] text-gray-400 font-medium">เอกสารในระบบ</div>
-                    </div>
-                    <div>
-                        <div class="text-xl sm:text-2xl font-bold text-amber-400">{{ $totalNews }}</div>
-                        <div class="text-[11px] text-gray-400 font-medium">ข่าวสาร/กิจกรรม</div>
-                    </div>
-                    <div>
-                        <div class="text-xl sm:text-2xl font-bold text-amber-400">จ. - ศ.</div>
-                        <div class="text-[11px] text-gray-400 font-medium">ทนายความอาสา</div>
-                    </div>
                 </div>
             </div>
 
-            <!-- Right Featured News & Announcements Auto-sliding Carousel -->
-            <div class="lg:col-span-5 p-6 lg:p-8">
-                @if(isset($heroSlides) && $heroSlides->count() > 0)
-                <div id="heroCarousel" class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/80 bg-slate-900 group select-none">
-                    <!-- Slides Container -->
-                    <div class="relative h-72 sm:h-80 md:h-[22rem] w-full overflow-hidden">
-                        @foreach($heroSlides as $index => $slide)
-                        @php
-                            $isAnnouncement = $slide->category && (
-                                str_contains($slide->category->slug, 'announcement') ||
-                                str_contains($slide->category->slug, 'official') ||
-                                str_contains($slide->category->name, 'ประกาศ')
-                            );
-                        @endphp
-                        <div class="hero-slide absolute inset-0 transition-all duration-700 ease-in-out {{ $index === 0 ? 'opacity-100 scale-100 z-10 pointer-events-auto' : 'opacity-0 scale-95 z-0 pointer-events-none' }}" data-index="{{ $index }}">
-                            <a href="{{ route('news.show', $slide) }}" class="block w-full h-full relative group/item focus:outline-none">
-                                @if($slide->cover_image)
-                                    <img src="{{ asset('storage/' . $slide->cover_image) }}" alt="{{ $slide->title }}" class="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-700">
-                                @else
-                                    <div class="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-gray-500">
-                                        <i class="fa-regular fa-image text-5xl"></i>
-                                    </div>
-                                @endif
-                                <!-- Dark Gradient Layer for Contrast -->
-                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-black/20"></div>
-
-                                <!-- Badge / Category Tag -->
-                                <div class="absolute top-4 left-4 flex items-center gap-2">
-                                    @if($isAnnouncement)
-                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full shadow-lg">
-                                            <i class="fa-solid fa-bullhorn text-[11px]"></i> ประกาศทางการ
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full shadow-lg">
-                                            <i class="fa-solid fa-star text-[11px]"></i> ข่าวเด่นล่าสุด
-                                        </span>
-                                    @endif
-                                </div>
-
-                                <!-- Slide Index Indicator Badge -->
-                                <div class="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm border border-slate-700/60 text-gray-300 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow">
-                                    <span class="text-amber-400 font-bold">{{ $index + 1 }}</span> / {{ $heroSlides->count() }}
-                                </div>
-
-                                <!-- Slide Content / Bottom Caption -->
-                                <div class="absolute bottom-4 left-4 right-4 text-white z-20">
-                                    <div class="flex items-center gap-2 text-[11px] text-amber-400 font-medium mb-1.5">
-                                        <span><i class="fa-regular fa-calendar mr-1"></i> {{ optional($slide->published_at)->format('d/m/Y') ?? $slide->created_at->format('d/m/Y') }}</span>
-                                        <span>•</span>
-                                        <span class="text-gray-300 line-clamp-1">{{ $slide->category->name ?? 'ทั่วไป' }}</span>
-                                    </div>
-                                    <h3 class="text-base sm:text-lg font-bold line-clamp-2 group-hover/item:text-amber-400 transition-colors duration-200 leading-snug drop-shadow-sm">
-                                        {{ $slide->title }}
-                                    </h3>
-                                    <span class="inline-flex items-center gap-1 text-xs text-amber-300 mt-2 font-semibold group-hover/item:underline">
-                                        อ่านรายละเอียด <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                        @endforeach
-                    </div>
-
-                    @if($heroSlides->count() > 1)
-                    <!-- Navigation Arrows -->
-                    <button type="button" id="heroPrevBtn" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-amber-600 text-white flex items-center justify-center transition-all opacity-80 hover:opacity-100 shadow-lg border border-slate-700 z-30 focus:outline-none" aria-label="Previous Slide">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button type="button" id="heroNextBtn" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-amber-600 text-white flex items-center justify-center transition-all opacity-80 hover:opacity-100 shadow-lg border border-slate-700 z-30 focus:outline-none" aria-label="Next Slide">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-
-                    <!-- Indicators / Dots -->
-                    <div class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30 bg-slate-950/60 backdrop-blur-sm px-2.5 py-1 rounded-full border border-slate-700/50">
-                        @foreach($heroSlides as $dotIndex => $slide)
-                        <button type="button" class="hero-dot h-1.5 rounded-full transition-all duration-300 {{ $dotIndex === 0 ? 'w-5 bg-amber-500' : 'w-2 bg-white/40 hover:bg-white/70' }}" data-index="{{ $dotIndex }}" aria-label="Go to slide {{ $dotIndex + 1 }}"></button>
-                        @endforeach
-                    </div>
-                    @endif
+            <!-- Right Stats Grid -->
+            <div class="lg:col-span-4 grid grid-cols-3 gap-3 bg-slate-800/60 p-5 rounded-xl border border-slate-700/60 text-center">
+                <div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-amber-400">{{ $totalDocuments }}+</div>
+                    <div class="text-[11px] sm:text-xs text-gray-300 font-medium mt-1">เอกสารในระบบ</div>
                 </div>
-
-                <!-- Carousel Logic Script -->
-                @if($heroSlides->count() > 1)
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const carousel = document.getElementById('heroCarousel');
-                        if (!carousel) return;
-
-                        const slides = carousel.querySelectorAll('.hero-slide');
-                        const dots = carousel.querySelectorAll('.hero-dot');
-                        const prevBtn = document.getElementById('heroPrevBtn');
-                        const nextBtn = document.getElementById('heroNextBtn');
-                        const total = slides.length;
-                        let currentIndex = 0;
-                        let timer = null;
-                        const INTERVAL_MS = 4500;
-
-                        function showSlide(index) {
-                            if (index < 0) index = total - 1;
-                            if (index >= total) index = 0;
-                            currentIndex = index;
-
-                            slides.forEach((slide, i) => {
-                                if (i === currentIndex) {
-                                    slide.classList.remove('opacity-0', 'scale-95', 'z-0', 'pointer-events-none');
-                                    slide.classList.add('opacity-100', 'scale-100', 'z-10', 'pointer-events-auto');
-                                } else {
-                                    slide.classList.remove('opacity-100', 'scale-100', 'z-10', 'pointer-events-auto');
-                                    slide.classList.add('opacity-0', 'scale-95', 'z-0', 'pointer-events-none');
-                                }
-                            });
-
-                            dots.forEach((dot, i) => {
-                                if (i === currentIndex) {
-                                    dot.classList.remove('w-2', 'bg-white/40');
-                                    dot.classList.add('w-5', 'bg-amber-500');
-                                } else {
-                                    dot.classList.remove('w-5', 'bg-amber-500');
-                                    dot.classList.add('w-2', 'bg-white/40');
-                                }
-                            });
-                        }
-
-                        function nextSlide() {
-                            showSlide(currentIndex + 1);
-                        }
-
-                        function prevSlide() {
-                            showSlide(currentIndex - 1);
-                        }
-
-                        function startTimer() {
-                            stopTimer();
-                            timer = setInterval(nextSlide, INTERVAL_MS);
-                        }
-
-                        function stopTimer() {
-                            if (timer) {
-                                clearInterval(timer);
-                                timer = null;
-                            }
-                        }
-
-                        if (nextBtn) {
-                            nextBtn.addEventListener('click', function(e) {
-                                e.stopPropagation();
-                                nextSlide();
-                                startTimer();
-                            });
-                        }
-
-                        if (prevBtn) {
-                            prevBtn.addEventListener('click', function(e) {
-                                e.stopPropagation();
-                                prevSlide();
-                                startTimer();
-                            });
-                        }
-
-                        dots.forEach(function(dot) {
-                            dot.addEventListener('click', function(e) {
-                                e.stopPropagation();
-                                const idx = parseInt(dot.getAttribute('data-index'), 10);
-                                showSlide(idx);
-                                startTimer();
-                            });
-                        });
-
-                        carousel.addEventListener('mouseenter', stopTimer);
-                        carousel.addEventListener('mouseleave', startTimer);
-                        carousel.addEventListener('touchstart', stopTimer, { passive: true });
-                        carousel.addEventListener('touchend', startTimer, { passive: true });
-
-                        // Start autoplay
-                        startTimer();
-                    });
-                </script>
-                @endif
-                @endif
+                <div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-amber-400">{{ $totalNews }}</div>
+                    <div class="text-[11px] sm:text-xs text-gray-300 font-medium mt-1">ข่าว/ประกาศ</div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-amber-400">จ. - ศ.</div>
+                    <div class="text-[11px] sm:text-xs text-gray-300 font-medium mt-1">ทนายความอาสา</div>
+                </div>
             </div>
         </div>
     </div>
