@@ -16,8 +16,60 @@
     <meta property="og:locale" content="th_TH">
     <meta property="og:image" content="{{ asset('images/logo.png') }}">
 
+    <!-- Robots / Crawlers -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="author" content="สภาทนายความจังหวัดราชบุรี">
+
     <!-- Canonical URL (รูปแบบบัญญัติสำหรับ Google Search Console) -->
     <link rel="canonical" href="{{ url()->current() }}">
+
+    <!-- Schema.org JSON-LD Structured Data for Google Search Engine -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LegalService",
+      "name": "สภาทนายความจังหวัดราชบุรี",
+      "alternateName": [
+        "สภาทนายความ ในพระบรมราชูปถัมภ์ จังหวัดราชบุรี",
+        "Ratchaburi Lawyers Council"
+      ],
+      "url": "https://ratchaburilawyerscouncil.or.th",
+      "logo": "https://ratchaburilawyerscouncil.or.th/images/logo.png",
+      "image": "https://ratchaburilawyerscouncil.or.th/images/logo.png",
+      "description": "เว็บไซต์อย่างเป็นทางการ สภาทนายความจังหวัดราชบุรี ศูนย์รวมข้อมูลข่าวสาร คลังเอกสารกฎหมาย และการให้ความช่วยเหลือประชาชนทางกฎหมาย",
+      "telephone": "+66-97-195-2029",
+      "email": "Lawyerscouncilrb@gmail.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "33 ถนนเสือป่า ซอย 4",
+        "addressLocality": "ตำบลหน้าเมือง",
+        "addressRegion": "จังหวัดราชบุรี",
+        "postalCode": "70000",
+        "addressCountry": "TH"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 13.5273853,
+        "longitude": 99.810601
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "08:30",
+        "closes": "16:30"
+      },
+      "sameAs": [
+        "https://www.facebook.com/RachaburiLawyer/?locale=th_TH",
+        "https://www.lawyerscouncil.or.th"
+      ]
+    }
+    </script>
 
     <!-- Favicon ตราสัญลักษณ์สภาทนายความ (พร้อม Cache-Busting) -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v=2">
