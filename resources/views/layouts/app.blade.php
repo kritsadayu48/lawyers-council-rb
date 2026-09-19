@@ -145,7 +145,48 @@
         <nav class="hidden md:block bg-slate-800 text-white shadow-inner">
             <div class="max-w-7xl mx-auto px-4 flex items-center space-x-1 sm:space-x-2 text-sm font-medium">
                 <a href="{{ route('home') }}" class="py-3 px-3 transition {{ request()->routeIs('home') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-house mr-1"></i> หน้าแรก</a>
-                <a href="{{ route('about') }}" class="py-3 px-3 transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-users mr-1"></i> เกี่ยวกับองค์กร</a>
+                <!-- เมนูแบบ Dropdown เมื่อนำเมาส์ไปชี้ "เกี่ยวกับองค์กร" -->
+                <div class="relative group">
+                    <a href="{{ route('about') }}" class="py-3 px-3 transition inline-flex items-center gap-1.5 {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}">
+                        <i class="fa-solid fa-users mr-1"></i>
+                        <span>เกี่ยวกับองค์กร</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] opacity-70 group-hover:rotate-180 transition-transform duration-200"></i>
+                    </a>
+                    <!-- เมนูย่อยที่แสดงเมื่อ Hover (Dropdown) -->
+                    <div class="absolute left-0 top-full pt-1.5 w-64 hidden group-hover:block z-50 drop-shadow-xl">
+                        <div class="bg-white rounded-xl shadow-2xl border border-slate-200/90 py-1.5 overflow-hidden text-slate-800">
+                            <a href="{{ route('about') }}?tab=presidents#tab-presidents" class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold hover:bg-amber-50 hover:text-amber-700 transition">
+                                <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-award"></i>
+                                </span>
+                                <div>
+                                    <span class="block">ธรรมเนียบประธาน</span>
+                                    <span class="block text-[10px] text-slate-400 font-normal">อดีตประธานสภาฯ ถึงปัจจุบัน</span>
+                                </div>
+                            </a>
+                            <div class="border-t border-slate-100 my-0.5"></div>
+                            <a href="{{ route('about') }}?tab=committee#tab-committee" class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold hover:bg-amber-50 hover:text-amber-700 transition">
+                                <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-users"></i>
+                                </span>
+                                <div>
+                                    <span class="block">คณะกรรมการสภา</span>
+                                    <span class="block text-[10px] text-slate-400 font-normal">คณะกรรมการชุดปัจจุบัน (15 ท่าน)</span>
+                                </div>
+                            </a>
+                            <div class="border-t border-slate-100 my-0.5"></div>
+                            <a href="{{ route('about') }}?tab=lawyers#tab-lawyers" class="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold hover:bg-amber-50 hover:text-amber-700 transition">
+                                <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-id-badge"></i>
+                                </span>
+                                <div>
+                                    <span class="block">ทนายความจังหวัดราชบุรี</span>
+                                    <span class="block text-[10px] text-slate-400 font-normal">ทำเนียบรายชื่อทนายความ</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <a href="{{ route('news.index') }}" class="py-3 px-3 transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-newspaper mr-1"></i> ข่าวสารและกิจกรรม</a>
                 <a href="{{ route('documents.index') }}" class="py-3 px-3 transition {{ request()->routeIs('documents.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-book mr-1"></i> คลังกฎหมายและแบบฟอร์ม</a>
                 <a href="{{ route('contact') }}" class="py-3 px-3 transition {{ request()->routeIs('contact') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-address-book mr-1"></i> ติดต่อเรา</a>
@@ -158,10 +199,29 @@
                 <i class="fa-solid fa-house w-5 text-center text-amber-400"></i>
                 <span>หน้าแรก</span>
             </a>
-            <a href="{{ route('about') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                <i class="fa-solid fa-users w-5 text-center text-amber-400"></i>
-                <span>เกี่ยวกับองค์กร</span>
-            </a>
+            <div class="space-y-1">
+                <a href="{{ route('about') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-users w-5 text-center text-amber-400"></i>
+                        <span>เกี่ยวกับองค์กร</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-xs opacity-60"></i>
+                </a>
+                <div class="pl-8 pr-2 py-1 space-y-1 text-xs">
+                    <a href="{{ route('about') }}?tab=presidents#tab-presidents" class="flex items-center gap-2 py-1.5 px-3 rounded-md text-slate-300 hover:text-amber-400 hover:bg-slate-800/80 transition">
+                        <i class="fa-solid fa-award text-amber-400 text-[11px] w-4 text-center"></i>
+                        <span>ธรรมเนียบประธาน</span>
+                    </a>
+                    <a href="{{ route('about') }}?tab=committee#tab-committee" class="flex items-center gap-2 py-1.5 px-3 rounded-md text-slate-300 hover:text-amber-400 hover:bg-slate-800/80 transition">
+                        <i class="fa-solid fa-users text-amber-400 text-[11px] w-4 text-center"></i>
+                        <span>คณะกรรมการสภา</span>
+                    </a>
+                    <a href="{{ route('about') }}?tab=lawyers#tab-lawyers" class="flex items-center gap-2 py-1.5 px-3 rounded-md text-slate-300 hover:text-amber-400 hover:bg-slate-800/80 transition">
+                        <i class="fa-solid fa-id-badge text-blue-400 text-[11px] w-4 text-center"></i>
+                        <span>ทนายความจังหวัดราชบุรี</span>
+                    </a>
+                </div>
+            </div>
             <a href="{{ route('news.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-newspaper w-5 text-center text-amber-400"></i>
                 <span>ข่าวสารและกิจกรรม</span>

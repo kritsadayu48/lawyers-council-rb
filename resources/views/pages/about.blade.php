@@ -419,29 +419,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
 
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
+    function switchTab(targetId) {
+        if (!targetId) return;
+        if (!targetId.startsWith('tab-')) {
+            targetId = 'tab-' + targetId;
+        }
 
+        const targetBtn = document.querySelector(`.tab-btn[data-target="${targetId}"]`);
+        const targetPane = document.getElementById(targetId);
+
+        if (targetBtn && targetPane) {
             // Reset all buttons style
             tabButtons.forEach(b => {
                 b.classList.remove('bg-amber-600', 'text-white', 'shadow-sm');
                 b.classList.add('text-slate-600', 'hover:bg-slate-100');
             });
 
-            // Activate clicked button
-            this.classList.remove('text-slate-600', 'hover:bg-slate-100');
-            this.classList.add('bg-amber-600', 'text-white', 'shadow-sm');
+            // Activate target button
+            targetBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+            targetBtn.classList.add('bg-amber-600', 'text-white', 'shadow-sm');
 
-            // Hide all panes
+            // Hide all panes & show target
             tabPanes.forEach(pane => pane.classList.add('hidden'));
+            targetPane.classList.remove('hidden');
+        }
+    }
 
-            // Show target pane
-            const targetPane = document.getElementById(targetId);
-            if (targetPane) {
-                targetPane.classList.remove('hidden');
-            }
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            switchTab(targetId);
         });
+    });
+
+    // Check URL parameters (?tab=...) or Hash (#tab-...) on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const hashParam = window.location.hash ? window.location.hash.replace('#', '') : null;
+
+    if (tabParam) {
+        switchTab(tabParam);
+    } else if (hashParam) {
+        switchTab(hashParam);
+    }
+
+    // Support in-page hash changes (when clicking dropdown from within /about page)
+    window.addEventListener('hashchange', function() {
+        const currentHash = window.location.hash ? window.location.hash.replace('#', '') : null;
+        if (currentHash) {
+            switchTab(currentHash);
+        }
     });
 
     // 2. Real-time Lawyer Search
