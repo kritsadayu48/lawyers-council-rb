@@ -106,7 +106,10 @@
                     <i class="fa-solid fa-envelope mr-1.5 text-amber-500"></i> Lawyerscouncilrb@gmail.com
                 </a>
                 <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 transition flex items-center text-blue-300">
-                    <i class="fa-brands fa-facebook mr-1.5 text-[#1877F2] text-sm"></i> Facebook สภาทนายความจังหวัดราชบุรี
+                    <i class="fa-brands fa-facebook mr-1.5 text-[#1877F2] text-sm"></i> Facebook สภาทนายความ
+                </a>
+                <a href="https://www.youtube.com/@lawyerscouncilrb" target="_blank" rel="noopener noreferrer" class="hover:text-red-400 transition flex items-center text-red-300" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี (เร็วๆ นี้)">
+                    <i class="fa-brands fa-youtube mr-1.5 text-[#FF0000] text-sm"></i> YouTube สภาทนายความ
                 </a>
             </div>
             <div>
@@ -142,7 +145,7 @@
         <nav class="hidden md:block bg-slate-800 text-white shadow-inner">
             <div class="max-w-7xl mx-auto px-4 flex items-center space-x-1 sm:space-x-2 text-sm font-medium">
                 <a href="{{ route('home') }}" class="py-3 px-3 transition {{ request()->routeIs('home') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-house mr-1"></i> หน้าแรก</a>
-                <a href="{{ route('about') }}" class="py-3 px-3 transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-users mr-1"></i> เกี่ยวกับองค์กร/โครงสร้าง</a>
+                <a href="{{ route('about') }}" class="py-3 px-3 transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-users mr-1"></i> เกี่ยวกับองค์กร</a>
                 <a href="{{ route('news.index') }}" class="py-3 px-3 transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-newspaper mr-1"></i> ข่าวสารและกิจกรรม</a>
                 <a href="{{ route('documents.index') }}" class="py-3 px-3 transition {{ request()->routeIs('documents.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-book mr-1"></i> คลังกฎหมายและแบบฟอร์ม</a>
                 <a href="{{ route('contact') }}" class="py-3 px-3 transition {{ request()->routeIs('contact') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-200 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-address-book mr-1"></i> ติดต่อเรา</a>
@@ -157,7 +160,7 @@
             </a>
             <a href="{{ route('about') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('about') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-users w-5 text-center text-amber-400"></i>
-                <span>เกี่ยวกับองค์กร/โครงสร้าง</span>
+                <span>เกี่ยวกับองค์กร</span>
             </a>
             <a href="{{ route('news.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition {{ request()->routeIs('news.*') ? 'bg-amber-600 text-white font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-newspaper w-5 text-center text-amber-400"></i>
@@ -214,9 +217,14 @@
                     33 ถนนเสือป่า ซอย 4 ต.หน้าเมือง อ.เมืองราชบุรี จ.ราชบุรี 70000<br>
                     โทร: <a href="tel:0971952029" class="hover:text-amber-400">097-195-2029</a><br>
                     อีเมล: <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400">Lawyerscouncilrb@gmail.com</a><br>
-                    <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 mt-1 font-medium">
-                        <i class="fa-brands fa-facebook text-base text-[#1877F2]"></i> เพจเฟซบุ๊กทางการ
-                    </a>
+                    <div class="mt-2 flex flex-col gap-1.5">
+                        <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 font-medium">
+                            <i class="fa-brands fa-facebook text-base text-[#1877F2]"></i> เพจเฟซบุ๊กทางการ
+                        </a>
+                        <a href="https://www.youtube.com/@lawyerscouncilrb" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 font-medium" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี (เร็วๆ นี้)">
+                            <i class="fa-brands fa-youtube text-base text-[#FF0000]"></i> ช่อง YouTube สภาทนายความ
+                        </a>
+                    </div>
                 </p>
             </div>
             <div>

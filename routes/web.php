@@ -11,7 +11,7 @@ Route::get('/documents', [DocumentController::class, 'index'])->name('documents.
 Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
 
 // หน้าข้อมูลองค์กรทั่วไป
-Route::view('/about', 'pages.about')->name('about');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::view('/contact', 'pages.contact')->name('contact');
 
 // ข่าวสารและกิจกรรม
@@ -87,6 +87,11 @@ Route::get('/init-stats-table', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         $log[] = "Artisan migrate:\n" . \Illuminate\Support\Facades\Artisan::output();
+
+        if (\App\Models\Personnel::count() === 0) {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\PersonnelSeeder', '--force' => true]);
+            $log[] = "PersonnelSeeder executed successfully (15 committee members + president).";
+        }
     } catch (\Throwable $e) {
         $log[] = "Artisan migrate warning: " . $e->getMessage();
     }

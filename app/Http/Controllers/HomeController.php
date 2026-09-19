@@ -105,4 +105,13 @@ class HomeController extends Controller
 
         return view('news.index', compact('newsList', 'categories'));
     }
+
+    public function about()
+    {
+        $presidents = \App\Models\Personnel::president()->active()->orderBy('order_column')->get();
+        $committees = \App\Models\Personnel::committee()->active()->orderBy('order_column')->get();
+        $lawyers = \App\Models\Personnel::lawyer()->active()->orderBy('order_column')->get();
+
+        return view('pages.about', compact('presidents', 'committees', 'lawyers'));
+    }
 }
