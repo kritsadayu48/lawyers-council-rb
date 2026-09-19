@@ -83,17 +83,49 @@ Route::get('/init-stats-table', function () {
 
     $log = [];
 
-    // 1. Run migrations safely
+    // 1. Ensure 'personnels' table exists directly and robustly
     try {
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        $log[] = "Artisan migrate:\n" . \Illuminate\Support\Facades\Artisan::output();
+        if (!\Illuminate\Support\Facades\Schema::hasTable('personnels')) {
+            \Illuminate\Support\Facades\Schema::create('personnels', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->string('type')->default('ratchaburi_lawyer')->index();
+                $table->string('name');
+                $table->string('position')->nullable();
+                $table->string('term')->nullable();
+                $table->string('phone')->nullable();
+                $table->string('email')->nullable();
+                $table->string('license_no')->nullable();
+                $table->string('office_name')->nullable();
+                $table->string('image_path')->nullable();
+                $table->text('bio')->nullable();
+                $table->integer('order_column')->default(0)->index();
+                $table->boolean('is_active')->default(true)->index();
+                $table->timestamps();
+            });
+            $log[] = "Table 'personnels' created directly via Schema builder.";
+        } else {
+            $log[] = "Table 'personnels' already exists.";
+        }
 
+        // Run PersonnelSeeder if empty
         if (\App\Models\Personnel::count() === 0) {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\PersonnelSeeder', '--force' => true]);
-            $log[] = "PersonnelSeeder executed successfully (15 committee members + president).";
+            $seeder = new \Database\Seeders\PersonnelSeeder();
+            $seeder->run();
+            $log[] = "PersonnelSeeder executed successfully: 15 committee members + president + lawyer directory added.";
+        } else {
+            $count = \App\Models\Personnel::count();
+            $log[] = "Personnel table already has {$count} records.";
         }
     } catch (\Throwable $e) {
-        $log[] = "Artisan migrate warning: " . $e->getMessage();
+        $log[] = "Personnel setup error: " . $e->getMessage();
+    }
+
+    // 1.1 Run any other pending migrations safely
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $log[] = "Artisan migrate output:\n" . \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Throwable $e) {
+        $log[] = "Artisan migrate notice (safe to ignore if tables pre-existed): " . $e->getMessage();
     }
 
     // 2. Direct guarantee for categories
