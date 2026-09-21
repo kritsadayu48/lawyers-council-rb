@@ -166,7 +166,14 @@ Route::group(['middleware' => function ($request, $next) {
     // เครื่องมือฉุกเฉินสำหรับสร้างหรือรีเซ็ตรหัสผ่านแอดมิน (กรณีลืมรหัสผ่าน)
     Route::get('/reset-admin-password', function () {
         $email = request('email', 'admin@ratchaburilawyerscouncil.or.th');
-        $newPassword = request('password', 'AdminRb2026!');
+        $newPassword = request('password');
+
+        if (!$newPassword) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'กรุณาระบุรหัสผ่านใหม่ที่ต้องการทางพารามิเตอร์ เช่น &password=รหัสผ่านใหม่',
+            ], 400);
+        }
 
         $user = \App\Models\User::firstOrNew(['email' => $email]);
         $user->name = request('name', $user->name ?: 'ผู้ดูแลระบบ สภาทนายความ');
@@ -177,7 +184,6 @@ Route::group(['middleware' => function ($request, $next) {
             'status' => 'success',
             'message' => "ตั้งรหัสผ่านใหม่สำหรับ {$email} สำเร็จเรียบร้อย",
             'email' => $email,
-            'password' => $newPassword,
             'login_url' => url('/admin/login'),
         ]);
     });
