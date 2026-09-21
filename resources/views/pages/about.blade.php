@@ -256,10 +256,6 @@
             </div>
             @endif
 
-            <div class="mt-8 p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 flex items-center gap-3 text-xs text-amber-900">
-                <i class="fa-solid fa-circle-info text-amber-600 text-base shrink-0"></i>
-                <span>ผู้ดูแลระบบสามารถเพิ่ม แก้ไข หรือนำเข้ารายชื่ออดีตประธานสภาทนายความตั้งแต่ต้นจนถึงปัจจุบันได้ที่ระบบแอดมินหลังบ้าน</span>
-            </div>
         </div>
     </div>
 
