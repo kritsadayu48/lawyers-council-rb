@@ -97,24 +97,19 @@
 
     <!-- Topbar แถบข้อมูลติดต่อด้านบนสุด -->
     <div class="bg-slate-900 text-gray-300 text-xs py-2 px-4 border-b border-slate-800">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-center sm:text-left">
-            <div class="flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-1">
-                <a href="tel:0971952029" class="hover:text-amber-400 transition flex items-center">
-                    <i class="fa-solid fa-phone mr-1.5 text-amber-500"></i> 097-195-2029
-                </a>
-                <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400 transition flex items-center">
-                    <i class="fa-solid fa-envelope mr-1.5 text-amber-500"></i> Lawyerscouncilrb@gmail.com
-                </a>
-                <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 transition flex items-center text-blue-300">
-                    <i class="fa-brands fa-facebook mr-1.5 text-[#1877F2] text-sm"></i> Facebook สภาทนายความ
-                </a>
-                <a href="https://www.youtube.com/@lawyerscouncilrb" target="_blank" rel="noopener noreferrer" class="hover:text-red-400 transition flex items-center text-red-300" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี (เร็วๆ นี้)">
-                    <i class="fa-brands fa-youtube mr-1.5 text-[#FF0000] text-sm"></i> YouTube สภาทนายความ
-                </a>
-            </div>
-            <div>
-                <a href="/admin" class="hover:text-amber-400 transition"><i class="fa-solid fa-lock mr-1"></i> สำหรับเจ้าหน้าที่ (เข้าสู่ระบบ)</a>
-            </div>
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-center sm:justify-start items-center gap-x-5 gap-y-1 text-center sm:text-left">
+            <a href="tel:0971952029" class="hover:text-amber-400 transition flex items-center">
+                <i class="fa-solid fa-phone mr-1.5 text-amber-500"></i> 097-195-2029
+            </a>
+            <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400 transition flex items-center">
+                <i class="fa-solid fa-envelope mr-1.5 text-amber-500"></i> Lawyerscouncilrb@gmail.com
+            </a>
+            <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 transition flex items-center text-blue-300">
+                <i class="fa-brands fa-facebook mr-1.5 text-[#1877F2] text-sm"></i> Facebook สภาทนายความ
+            </a>
+            <a href="https://www.youtube.com/@lawyerscouncilrb" target="_blank" rel="noopener noreferrer" class="hover:text-red-400 transition flex items-center text-red-300" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี (เร็วๆ นี้)">
+                <i class="fa-brands fa-youtube mr-1.5 text-[#FF0000] text-sm"></i> YouTube สภาทนายความ
+            </a>
         </div>
     </div>
 
@@ -236,10 +231,10 @@
             </a>
             <div class="pt-3 mt-2 border-t border-slate-800 flex items-center justify-between text-xs text-gray-400 px-3">
                 <a href="tel:0971952029" class="hover:text-amber-400 flex items-center gap-1.5 py-1">
-                    <i class="fa-solid fa-phone text-amber-500"></i> 097-195-2029
+                    <i class="fa-solid fa-phone text-amber-500"></i> โทร: 097-195-2029
                 </a>
-                <a href="/admin" class="hover:text-amber-400 flex items-center gap-1.5 py-1 text-amber-400">
-                    <i class="fa-solid fa-lock"></i> เข้าสู่ระบบแอดมิน
+                <a href="mailto:Lawyerscouncilrb@gmail.com" class="hover:text-amber-400 flex items-center gap-1.5 py-1">
+                    <i class="fa-solid fa-envelope text-amber-500"></i> อีเมลสภาทนายความ
                 </a>
             </div>
         </div>
