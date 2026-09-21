@@ -20,43 +20,11 @@ Route::get('/news/{news:slug}', [HomeController::class, 'showNews'])->name('news
 
 // Dynamic Sitemap & Robots.txt สำหรับ Google Search Console และ SEO
 Route::get('/sitemap.xml', function () {
-    $baseUrl = config('app.url', 'https://ratchaburilawyerscouncil.or.th');
-    $newsList = \App\Models\News::where('is_published', true)->latest()->get();
+    $xml = \App\Services\SitemapService::generateXml();
 
-    $xml = '<?xml version="1.0" encoding="UTF-8"?>';
-    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-
-    // หน้าหลัก
-    $staticPages = [
-        ['loc' => $baseUrl . '/', 'priority' => '1.0', 'changefreq' => 'daily'],
-        ['loc' => $baseUrl . '/about', 'priority' => '0.8', 'changefreq' => 'monthly'],
-        ['loc' => $baseUrl . '/news', 'priority' => '0.9', 'changefreq' => 'daily'],
-        ['loc' => $baseUrl . '/documents', 'priority' => '0.9', 'changefreq' => 'weekly'],
-        ['loc' => $baseUrl . '/contact', 'priority' => '0.8', 'changefreq' => 'monthly'],
-    ];
-
-    foreach ($staticPages as $page) {
-        $xml .= '<url>';
-        $xml .= '<loc>' . htmlspecialchars($page['loc']) . '</loc>';
-        $xml .= '<lastmod>' . date('Y-m-d') . '</lastmod>';
-        $xml .= '<changefreq>' . $page['changefreq'] . '</changefreq>';
-        $xml .= '<priority>' . $page['priority'] . '</priority>';
-        $xml .= '</url>';
-    }
-
-    // หน้าข่าวสารแต่ละโพสต์
-    foreach ($newsList as $news) {
-        $xml .= '<url>';
-        $xml .= '<loc>' . htmlspecialchars($baseUrl . '/news/' . $news->slug) . '</loc>';
-        $xml .= '<lastmod>' . ($news->updated_at ? $news->updated_at->format('Y-m-d') : date('Y-m-d')) . '</lastmod>';
-        $xml .= '<changefreq>weekly</changefreq>';
-        $xml .= '<priority>0.7</priority>';
-        $xml .= '</url>';
-    }
-
-    $xml .= '</urlset>';
-
-    return response($xml, 200)->header('Content-Type', 'application/xml');
+    return response($xml, 200)
+        ->header('Content-Type', 'application/xml; charset=utf-8')
+        ->header('Cache-Control', 'public, max-age=3600');
 });
 
 Route::get('/robots.txt', function () {
@@ -161,6 +129,15 @@ Route::get('/init-stats-table', function () {
         $log[] = "Categories error: " . $e->getMessage();
     }
 
+    // 3. Generate physical sitemap.xml for Google Search Console
+    try {
+        if (\App\Services\SitemapService::writeToFile()) {
+            $log[] = "sitemap.xml successfully generated and saved to public/sitemap.xml";
+        }
+    } catch (\Throwable $e) {
+        $log[] = "Sitemap generation error: " . $e->getMessage();
+    }
+
     return '<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">'
         . '<h2 style="color: green;">✅ อัปเดตฐานข้อมูลและหมวดหมู่เรียบร้อยแล้ว</h2>'
         . '<pre style="background: #f4f4f4; padding: 15px; border-radius: 6px;">' . htmlspecialchars(implode("\n\n", $log)) . '</pre>'
@@ -177,6 +154,15 @@ Route::group(['middleware' => function ($request, $next) {
     }
     abort(403, 'ขออภัย เฉพาะผู้ดูแลระบบที่ได้รับอนุญาตเท่านั้น');
 }], function () {
+    Route::get('/generate-sitemap', function () {
+        $success = \App\Services\SitemapService::writeToFile();
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'sitemap.xml regenerated successfully!' : 'Failed to write sitemap.xml',
+            'sitemap_url' => url('/sitemap.xml'),
+        ]);
+    });
+
     Route::get('/repair-symlink', function () {
         $publicStorage = public_path('storage');
         $target = storage_path('app/public');
