@@ -129,6 +129,44 @@ Route::get('/init-stats-table', function () {
         $log[] = "Categories error: " . $e->getMessage();
     }
 
+    // 2.1 Ensure youtube_videos and site_settings tables exist directly
+    try {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('youtube_videos')) {
+            \Illuminate\Support\Facades\Schema::create('youtube_videos', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->string('title');
+                $table->string('youtube_url');
+                $table->string('youtube_id')->nullable()->index();
+                $table->text('description')->nullable();
+                $table->boolean('is_featured')->default(false)->index();
+                $table->boolean('is_active')->default(true)->index();
+                $table->integer('order_column')->default(0)->index();
+                $table->date('published_date')->nullable();
+                $table->timestamps();
+            });
+            $log[] = "Table 'youtube_videos' created successfully.";
+        }
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('site_settings')) {
+            \Illuminate\Support\Facades\Schema::create('site_settings', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->id();
+                $table->string('key')->unique();
+                $table->text('value')->nullable();
+                $table->string('label')->nullable();
+                $table->timestamps();
+            });
+            $log[] = "Table 'site_settings' created successfully.";
+        }
+
+        // Set default YouTube channel if not exists
+        \App\Models\SiteSetting::firstOrCreate(
+            ['key' => 'youtube_channel_url'],
+            ['value' => 'https://www.youtube.com/@lawyerscouncilrb', 'label' => 'ลิงก์ช่อง YouTube ทางการ']
+        );
+    } catch (\Throwable $e) {
+        $log[] = "YouTube & Settings setup warning: " . $e->getMessage();
+    }
+
     // 3. Generate physical sitemap.xml for Google Search Console
     try {
         if (\App\Services\SitemapService::writeToFile()) {

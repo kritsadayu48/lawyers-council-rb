@@ -157,5 +157,42 @@ INSERT INTO `personnels` (`id`, `type`, `name`, `position`, `term`, `phone`, `em
 INSERT INTO `personnels` (`id`, `type`, `name`, `position`, `term`, `phone`, `email`, `license_no`, `office_name`, `image_path`, `bio`, `order_column`, `is_active`, `created_at`, `updated_at`) VALUES ('30', 'ratchaburi_lawyer', 'นายจรัญ ระงับพิศม์', 'ทนายความ', '', '089-9563860', NULL, NULL, 'จังหวัดราชบุรี', NULL, '', '14', '1', NOW(), NOW());
 INSERT INTO `personnels` (`id`, `type`, `name`, `position`, `term`, `phone`, `email`, `license_no`, `office_name`, `image_path`, `bio`, `order_column`, `is_active`, `created_at`, `updated_at`) VALUES ('31', 'ratchaburi_lawyer', 'ว่าที่ร.ต.หญิงพนา นิลจันทร์', 'ทนายความ', '', '087-1580245', NULL, NULL, 'จังหวัดราชบุรี', NULL, '', '15', '1', NOW(), NOW());
 
+
+DROP TABLE IF EXISTS `youtube_videos`;
+CREATE TABLE `youtube_videos` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `youtube_url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `youtube_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_featured` tinyint(1) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `order_column` int(11) NOT NULL DEFAULT 0,
+  `published_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `youtube_videos_youtube_id_index` (`youtube_id`),
+  KEY `youtube_videos_is_featured_index` (`is_featured`),
+  KEY `youtube_videos_is_active_index` (`is_active`),
+  KEY `youtube_videos_order_column_index` (`order_column`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `site_settings`;
+CREATE TABLE `site_settings` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `label` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `site_settings_key_unique` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `site_settings` (`key`, `value`, `label`, `created_at`, `updated_at`) 
+VALUES ('youtube_channel_url', 'https://www.youtube.com/@lawyerscouncilrb', 'ลิงก์ช่อง YouTube ทางการ', NOW(), NOW());
+
 SET FOREIGN_KEY_CHECKS=1;
+
 

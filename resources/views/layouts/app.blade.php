@@ -107,7 +107,7 @@
             <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 transition flex items-center text-blue-300">
                 <i class="fa-brands fa-facebook mr-1.5 text-[#1877F2] text-sm"></i> Facebook สภาทนายความ
             </a>
-            <a href="https://www.youtube.com/@lawyerscouncilrb" target="_blank" rel="noopener noreferrer" class="hover:text-red-400 transition flex items-center text-red-300" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี (เร็วๆ นี้)">
+            <a href="{{ $youtubeChannelUrl ?? 'https://www.youtube.com/@lawyerscouncilrb' }}" target="_blank" rel="noopener noreferrer" class="hover:text-red-400 transition flex items-center text-red-300" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี">
                 <i class="fa-brands fa-youtube mr-1.5 text-[#FF0000] text-sm"></i> YouTube สภาทนายความ
             </a>
         </div>
@@ -276,7 +276,7 @@
                         <a href="https://www.facebook.com/RachaburiLawyer/?locale=th_TH" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 font-medium">
                             <i class="fa-brands fa-facebook text-base text-[#1877F2]"></i> เพจเฟซบุ๊กทางการ
                         </a>
-                        <a href="https://www.youtube.com/@lawyerscouncilrb" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 font-medium" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี (เร็วๆ นี้)">
+                        <a href="{{ $youtubeChannelUrl ?? 'https://www.youtube.com/@lawyerscouncilrb' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 font-medium" title="ช่อง YouTube สภาทนายความจังหวัดราชบุรี">
                             <i class="fa-brands fa-youtube text-base text-[#FF0000]"></i> ช่อง YouTube สภาทนายความ
                         </a>
                     </div>

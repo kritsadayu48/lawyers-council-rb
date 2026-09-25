@@ -352,7 +352,11 @@
     <!-- ======================================================== -->
     <!-- TAB 4: ช่อง YouTube และวิดีโอกิจกรรมถ่ายทอดสด -->
     <!-- ======================================================== -->
+    <!-- ======================================================== -->
+    <!-- TAB 4: ช่อง YouTube และวิดีโอกิจกรรมถ่ายทอดสด -->
+    <!-- ======================================================== -->
     <div id="tab-youtube" class="tab-pane hidden space-y-6">
+        <!-- แบนเนอร์หัวข้อ YouTube -->
         <div class="bg-gradient-to-br from-red-950 via-slate-900 to-slate-950 rounded-2xl p-6 sm:p-10 text-white shadow-xl border border-red-900/40 relative overflow-hidden">
             <div class="absolute -right-6 -bottom-6 text-red-500/10 text-9xl pointer-events-none">
                 <i class="fa-brands fa-youtube"></i>
@@ -369,18 +373,118 @@
                     กิจกรรมสำคัญของสภาทนายความจังหวัดราชบุรี เพื่อการเผยแพร่ความรู้และการมีส่วนร่วมของสมาชิก
                 </p>
 
-                <div class="mt-8 flex flex-wrap items-center gap-4">
-                    <a href="https://www.youtube.com/@lawyerscouncilrb" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-lg shadow-red-600/30 transition transform hover:-translate-y-0.5">
+                <div class="mt-6 flex flex-wrap items-center gap-4">
+                    <a href="{{ $youtubeChannelUrl ?? 'https://www.youtube.com/@lawyerscouncilrb' }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-lg shadow-red-600/30 transition transform hover:-translate-y-0.5">
                         <i class="fa-brands fa-youtube text-lg"></i>
                         <span>ติดตามช่อง YouTube ทางการ</span>
                     </a>
-                    <span class="text-xs text-slate-400 bg-white/10 px-3 py-2 rounded-lg border border-white/10">
-                        <i class="fa-solid fa-video text-amber-400 mr-1.5"></i> กำลังเตรียมพร้อมระบบถ่ายทอดสด
+                    @if(isset($youtubeVideos) && $youtubeVideos->count() > 0)
+                    <span class="text-xs text-slate-300 bg-white/10 px-3.5 py-2.5 rounded-xl border border-white/10 flex items-center gap-2">
+                        <i class="fa-solid fa-film text-red-400"></i> คลังวิดีโอ {{ $youtubeVideos->count() }} รายการ
                     </span>
+                    @endif
                 </div>
             </div>
         </div>
 
+        @if(isset($featuredVideo) && $featuredVideo)
+        <!-- เครื่องเล่นวิดีโอเด่น / วิดีโอล่าสุด (Featured Player) -->
+        <div class="bg-white rounded-2xl p-5 sm:p-7 border border-slate-200/80 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-bold shadow-xs">
+                        <i class="fa-solid fa-play text-[9px]"></i> {{ $featuredVideo->is_featured ? 'วิดีโอเด่น / ถ่ายทอดสด' : 'วิดีโอล่าสุด' }}
+                    </span>
+                    <h3 class="font-extrabold text-slate-900 text-base sm:text-lg line-clamp-1">{{ $featuredVideo->title }}</h3>
+                </div>
+                <a href="{{ $featuredVideo->watch_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-700 transition shrink-0">
+                    <span>เปิดดูบน YouTube</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+
+            <!-- YouTube Video Embed Player -->
+            <div class="relative w-full rounded-xl overflow-hidden bg-black aspect-video shadow-lg">
+                <iframe 
+                    class="w-full h-full" 
+                    src="{{ $featuredVideo->embed_url }}" 
+                    title="{{ $featuredVideo->title }}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+
+            @if($featuredVideo->description)
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p>{{ $featuredVideo->description }}</p>
+                @if($featuredVideo->published_date)
+                <p class="text-slate-400 text-xs mt-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-days text-slate-400"></i>
+                    <span>วันที่: {{ $featuredVideo->published_date->format('d/m/Y') }}</span>
+                </p>
+                @endif
+            </div>
+            @endif
+        </div>
+        @endif
+
+        @if(isset($youtubeVideos) && $youtubeVideos->count() > 1)
+        <!-- คลังคลิปวิดีโอทั้งหมด (Video Grid) -->
+        <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6">
+            <div class="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-clapperboard text-red-600"></i>
+                        <span>วิดีโอกิจกรรมและการสัมมนาย้อนหลัง</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">คลิกที่วิดีโอเพื่อรับชมผ่าน YouTube</p>
+                </div>
+                <a href="{{ $youtubeChannelUrl ?? 'https://www.youtube.com/@lawyerscouncilrb' }}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-red-600 hover:text-red-700 hidden sm:inline-flex items-center gap-1">
+                    <span>ดูทั้งหมดบนช่อง YouTube</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                @foreach($youtubeVideos as $video)
+                <a href="{{ $video->watch_url }}" target="_blank" rel="noopener noreferrer" class="group bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-xs hover:shadow-md hover:border-red-300 transition duration-200 flex flex-col">
+                    <div class="relative aspect-video bg-slate-900 overflow-hidden">
+                        <img src="{{ $video->thumbnail_url }}" alt="{{ $video->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition flex items-center justify-center">
+                            <span class="w-12 h-12 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition duration-200">
+                                <i class="fa-solid fa-play ml-0.5"></i>
+                            </span>
+                        </div>
+                        @if($video->is_featured)
+                        <span class="absolute top-2 left-2 px-2 py-0.5 rounded bg-red-600 text-white text-[10px] font-bold">
+                            วิดีโอเด่น
+                        </span>
+                        @endif
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm group-hover:text-red-600 transition line-clamp-2 leading-snug">
+                                {{ $video->title }}
+                            </h4>
+                            @if($video->description)
+                            <p class="text-xs text-slate-500 mt-1.5 line-clamp-2">{{ $video->description }}</p>
+                            @endif
+                        </div>
+                        @if($video->published_date)
+                        <div class="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+                            <span><i class="fa-regular fa-calendar mr-1"></i> {{ $video->published_date->format('d/m/Y') }}</span>
+                            <span class="text-red-600 group-hover:translate-x-0.5 transition"><i class="fa-brands fa-youtube"></i> ชมคลิป</span>
+                        </div>
+                        @endif
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        <!-- ข้อมูลแนะนำ 3 คอลัมน์ -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white rounded-xl p-6 border border-slate-200/80 shadow-sm text-center">
                 <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-2xl mx-auto mb-3">

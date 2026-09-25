@@ -47,7 +47,18 @@ class AppServiceProvider extends ServiceProvider
                 // Ignore DB read errors
             }
 
-            $view->with('visitorStats', $stats);
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('site_settings')) {
+                    $youtubeChannelUrl = \App\Models\SiteSetting::get('youtube_channel_url', 'https://www.youtube.com/@lawyerscouncilrb');
+                } else {
+                    $youtubeChannelUrl = 'https://www.youtube.com/@lawyerscouncilrb';
+                }
+            } catch (\Throwable $e) {
+                $youtubeChannelUrl = 'https://www.youtube.com/@lawyerscouncilrb';
+            }
+
+            $view->with('visitorStats', $stats)
+                 ->with('youtubeChannelUrl', $youtubeChannelUrl);
         });
     }
 }

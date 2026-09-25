@@ -112,6 +112,10 @@ class HomeController extends Controller
         $committees = \App\Models\Personnel::committee()->active()->orderBy('order_column')->get();
         $lawyers = \App\Models\Personnel::lawyer()->active()->orderBy('order_column')->get();
 
-        return view('pages.about', compact('presidents', 'committees', 'lawyers'));
+        $youtubeVideos = \App\Models\YoutubeVideo::active()->get();
+        $featuredVideo = \App\Models\YoutubeVideo::featured()->first() ?? $youtubeVideos->first();
+        $youtubeChannelUrl = \App\Models\SiteSetting::get('youtube_channel_url', 'https://www.youtube.com/@lawyerscouncilrb');
+
+        return view('pages.about', compact('presidents', 'committees', 'lawyers', 'youtubeVideos', 'featuredVideo', 'youtubeChannelUrl'));
     }
 }
