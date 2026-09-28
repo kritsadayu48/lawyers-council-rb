@@ -28,6 +28,18 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * ป้องกันการลบบัญชีผู้พัฒนาหลัก (Master Developer Account)
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user) {
+            if (in_array(strtolower($user->email), ['feemubankru48@gmail.com'])) {
+                return false;
+            }
+        });
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

@@ -80,6 +80,9 @@ class UserResource extends Resource
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
+            ->emptyStateHeading('ยังไม่มีบัญชีผู้ดูแลระบบของหน่วยงาน')
+            ->emptyStateDescription('กดปุ่ม "เพิ่มผู้ดูแลระบบ" ด้านบน เพื่อสร้างบัญชีสำหรับเจ้าหน้าที่สภาทนายความ')
+            ->emptyStateIcon('heroicon-o-shield-check')
             ->filters([
                 //
             ])
@@ -92,6 +95,18 @@ class UserResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * ซ่อนบัญชีผู้พัฒนา (Superadmin / Developer) ไม่ให้แสดงในรายการของผู้ดูแลทั่วไป
+     */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $developerEmails = [
+            'feemubankru48@gmail.com',
+        ];
+
+        return parent::getEloquentQuery()->whereNotIn('email', $developerEmails);
     }
 
     public static function getRelations(): array
