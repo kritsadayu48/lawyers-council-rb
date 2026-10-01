@@ -108,6 +108,12 @@ class HomeController extends Controller
 
     public function about()
     {
+        try {
+            \App\Models\Personnel::autoSyncAllPhotos();
+        } catch (\Throwable $e) {
+            // safe continue
+        }
+
         $presidents = \App\Models\Personnel::president()->active()->orderBy('order_column')->get();
         $committees = \App\Models\Personnel::committee()->active()->orderBy('order_column')->get();
         $lawyers = \App\Models\Personnel::lawyer()->active()->orderBy('order_column')->get();

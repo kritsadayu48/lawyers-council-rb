@@ -167,7 +167,15 @@ Route::get('/init-stats-table', function () {
         $log[] = "YouTube & Settings setup warning: " . $e->getMessage();
     }
 
-    // 3. Generate physical sitemap.xml for Google Search Console
+    // 3. Auto-sync personnel photos across categories
+    try {
+        $synced = \App\Models\Personnel::autoSyncAllPhotos();
+        $log[] = "Personnel photos auto-synced across categories: {$synced} records updated.";
+    } catch (\Throwable $e) {
+        $log[] = "Personnel photos sync note: " . $e->getMessage();
+    }
+
+    // 4. Generate physical sitemap.xml for Google Search Console
     try {
         if (\App\Services\SitemapService::writeToFile()) {
             $log[] = "sitemap.xml successfully generated and saved to public/sitemap.xml";

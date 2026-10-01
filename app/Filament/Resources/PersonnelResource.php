@@ -102,7 +102,7 @@ class PersonnelResource extends Resource
                             ->image()
                             ->imageEditor()
                             ->maxSize(5120)
-                            ->helperText('แนะนำรูปถ่ายแนวตั้ง หรือรูปถ่ายหน้าตรงขนาดสี่เหลี่ยมจัตุรัส')
+                            ->helperText('แนะนำรูปถ่ายแนวตั้ง หรือรูปถ่ายหน้าตรง (เมื่อบันทึก ระบบจะอัปเดตรูปนี้ไปยังหมวดหมู่อื่นๆ ที่เป็นบุคคลเดียวกันให้อัตโนมัติ เช่น คณะกรรมการ ทำเนียบประธาน หรือรายชื่อทนายความ)')
                             ->columnSpanFull(),
 
                         Textarea::make('bio')
@@ -121,6 +121,7 @@ class PersonnelResource extends Resource
                 ImageColumn::make('image_path')
                     ->label('รูปถ่าย')
                     ->circular()
+                    ->getStateUsing(fn ($record) => $record->display_image)
                     ->defaultImageUrl(asset('images/default-avatar.png')),
                 TextColumn::make('order_column')
                     ->label('ลำดับ')

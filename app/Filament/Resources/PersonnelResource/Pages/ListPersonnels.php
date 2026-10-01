@@ -22,6 +22,20 @@ class ListPersonnels extends ListRecords
                 ->label('เพิ่มข้อมูลบุคลากร')
                 ->icon('heroicon-o-plus'),
 
+            Actions\Action::make('syncPhotos')
+                ->label('ซิงค์รูปถ่ายชื่อตรงกัน')
+                ->icon('heroicon-o-arrow-path')
+                ->color('info')
+                ->tooltip('คัดลอกรูปถ่ายไปยังทุกหมวดหมู่ที่มีชื่อตรงกันอัตโนมัติ')
+                ->action(function (): void {
+                    $count = Personnel::autoSyncAllPhotos();
+                    Notification::make()
+                        ->title('ซิงค์รูปถ่ายสำเร็จ')
+                        ->body("ตรวจพบและอัปเดตรูปถ่ายของบุคคลที่มีชื่อตรงกันทั้งหมด {$count} รายการ")
+                        ->success()
+                        ->send();
+                }),
+
             Actions\Action::make('importCsv')
                 ->label('นำเข้ารายชื่อจากไฟล์ (CSV)')
                 ->icon('heroicon-o-arrow-up-tray')

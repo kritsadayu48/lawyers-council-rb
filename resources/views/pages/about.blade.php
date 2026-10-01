@@ -82,8 +82,8 @@
                     </div>
                     
                     <div class="w-32 h-32 mx-auto rounded-full p-1 bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md mt-2 mb-4">
-                        @if($president->image_path)
-                            <img src="{{ asset('storage/' . $president->image_path) }}" alt="{{ $president->name }}" class="w-full h-full object-cover rounded-full">
+                        @if($president->display_image)
+                            <img src="{{ asset('storage/' . $president->display_image) }}" alt="{{ $president->name }}" class="w-full h-full object-cover rounded-full">
                         @else
                             <div class="w-full h-full rounded-full bg-slate-900 text-amber-400 flex items-center justify-center text-4xl">
                                 <i class="fa-solid fa-user-tie"></i>
@@ -124,8 +124,8 @@
                     <div class="bg-slate-50/80 hover:bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition text-center flex flex-col justify-between group">
                         <div>
                             <div class="w-20 h-20 mx-auto rounded-full p-0.5 bg-slate-200 group-hover:bg-amber-400 transition mb-3">
-                                @if($vp->image_path)
-                                    <img src="{{ asset('storage/' . $vp->image_path) }}" alt="{{ $vp->name }}" class="w-full h-full object-cover rounded-full">
+                                @if($vp->display_image)
+                                    <img src="{{ asset('storage/' . $vp->display_image) }}" alt="{{ $vp->name }}" class="w-full h-full object-cover rounded-full">
                                 @else
                                     <div class="w-full h-full rounded-full bg-white text-slate-500 flex items-center justify-center text-2xl">
                                         <i class="fa-solid fa-user-tie"></i>
@@ -164,8 +164,8 @@
                     <div class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 transition text-center flex flex-col justify-between group">
                         <div>
                             <div class="w-16 h-16 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xl mb-3 group-hover:bg-slate-800 group-hover:text-white transition">
-                                @if($cm->image_path)
-                                    <img src="{{ asset('storage/' . $cm->image_path) }}" alt="{{ $cm->name }}" class="w-full h-full object-cover rounded-full">
+                                @if($cm->display_image)
+                                    <img src="{{ asset('storage/' . $cm->display_image) }}" alt="{{ $cm->name }}" class="w-full h-full object-cover rounded-full">
                                 @else
                                     <i class="fa-solid {{ str_contains($cm->name, 'หญิง') || str_contains($cm->name, 'นาง') ? 'fa-user-nurse' : 'fa-user' }}"></i>
                                 @endif
@@ -217,8 +217,8 @@
                     <div>
                         <div class="flex items-start gap-4">
                             <div class="w-16 h-16 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center text-2xl shrink-0 shadow">
-                                @if($p->image_path)
-                                    <img src="{{ asset('storage/' . $p->image_path) }}" alt="{{ $p->name }}" class="w-full h-full object-cover rounded-full">
+                                @if($p->display_image)
+                                    <img src="{{ asset('storage/' . $p->display_image) }}" alt="{{ $p->name }}" class="w-full h-full object-cover rounded-full">
                                 @else
                                     <i class="fa-solid fa-user-tie"></i>
                                 @endif
@@ -297,8 +297,8 @@
                 <div class="lawyer-card bg-slate-50/70 hover:bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between group" data-keywords="{{ mb_strtolower($lawyer->name . ' ' . $lawyer->phone . ' ' . $lawyer->position . ' ' . $lawyer->office_name . ' ' . $lawyer->license_no) }}">
                     <div>
                         <div class="w-20 h-20 mx-auto rounded-full bg-white border-2 border-slate-200 group-hover:border-amber-500 text-slate-400 flex items-center justify-center text-2xl mb-3 overflow-hidden shadow-sm transition">
-                            @if($lawyer->image_path)
-                                <img src="{{ asset('storage/' . $lawyer->image_path) }}" alt="{{ $lawyer->name }}" class="w-full h-full object-cover">
+                            @if($lawyer->display_image)
+                                <img src="{{ asset('storage/' . $lawyer->display_image) }}" alt="{{ $lawyer->name }}" class="w-full h-full object-cover">
                             @else
                                 <i class="fa-solid {{ str_contains($lawyer->name, 'หญิง') || str_contains($lawyer->name, 'นาง') ? 'fa-user-tie' : 'fa-user-tie' }}"></i>
                             @endif
