@@ -29,6 +29,7 @@ class FacebookImportService
     public static function parseText(string $rawText): array
     {
         $rawText = str_replace(["\r\n", "\r"], "\n", trim($rawText));
+        $rawText = preg_replace('/\s*(?:\.\.\.|…)?\s*(?:ดูเพิ่มเติม|See more)\s*$/u', '', $rawText);
         if (empty($rawText)) {
             return [
                 'title' => 'ข่าวสารและกิจกรรมสภาทนายความ (' . date('d/m/Y') . ')',

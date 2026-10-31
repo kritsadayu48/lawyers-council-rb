@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
     res.json({
         status: 'ok',
         service: 'Lawyers Council Facebook Scraper API',
-        version: '1.2.4',
+        version: '1.2.5',
         uptime: process.uptime()
     });
 });
@@ -138,41 +138,44 @@ app.post('/scrape', async (req, res) => {
                 }
             }
 
-            // วิธีที่ 2: วิเคราะห์จากเนื้อหาทั้งหมดในหน้า
+            // วิธีที่ 2: วิเคราะห์จากลำดับบรรทัด (Language-agnostic & Structure-based)
             if (!fullText) {
                 const bodyText = document.body.innerText || '';
                 const lines = bodyText.split('\n').map(l => l.trim()).filter(Boolean);
                 const postLines = [];
-                let capturing = false;
+                let startIndex = -1;
 
+                // ค้นหาตำแหน่งเริ่มต้น (หลังบรรทัดเวลา เช่น 6d, 1 hr, ชม., วัน หรือสัญลักษณ์ ·)
                 for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
+                    const l = lines[i];
+                    if (l.match(/^\d+\s*[dhmwy]/i) || l.includes('·') || l.includes('hrs') || l.includes('mins') || l.includes('ชม.') || l.includes('วัน')) {
+                        startIndex = i + 1;
+                        break;
+                    }
+                }
 
-                    // คำสั่งหยุดเมื่อถึงส่วนท้ายของโพสต์ (ปุ่มตัวเลข, สถิติ, โพสต์ถัดไป)
-                    if (capturing) {
-                        if (
-                            /^\+\d+$/.test(line) ||
-                            /^\d+$/.test(line) ||
-                            line.startsWith('Recent posts') ||
-                            line.startsWith('Recent Posts') ||
-                            line.startsWith('Related Pages') ||
-                            line.startsWith('โพสต์ล่าสุด') ||
-                            line === 'Like' || line === 'Comment' || line === 'Share' ||
-                            line === 'ถูกใจ' || line === 'แสดงความคิดเห็น' || line === 'แชร์'
-                        ) {
+                // หากยังไม่พบ ให้เริ่มที่บรรทัดแรกที่ยาวเกิน 35 ตัวอักษร
+                if (startIndex === -1) {
+                    for (let i = 0; i < Math.min(lines.length, 10); i++) {
+                        const l = lines[i];
+                        if (l.includes('วันที่') || (l.length > 35 && !l.includes('Facebook') && !l.includes('Log In') && !l.includes('Open app'))) {
+                            startIndex = i;
                             break;
                         }
-                        if (line !== 'See more' && line !== 'ดูเพิ่มเติม') {
-                            postLines.push(line);
+                    }
+                }
+
+                if (startIndex !== -1) {
+                    for (let i = startIndex; i < lines.length; i++) {
+                        let l = lines[i];
+                        // สิ้นสุดเมื่อเจอตัวเลขจำนวนรูป (+72), ยอดไลก์ (15), หรือหัวข้อถัดไป
+                        if (/^\+\d+$/.test(l) || /^\d+$/.test(l) || l.startsWith('Related') || l.startsWith('Recent') || l.startsWith('เพจที่') || l.startsWith('โพสต์') || l === 'Like' || l === 'Comment' || l === 'Share') {
+                            break;
                         }
-                    } else {
-                        // เริ่มจับข้อความเมื่อพบบรรทัดขึ้นต้นข่าว หรือบรรทัดที่มีข้อความยาว
-                        const isDateOrTitle = line.includes('วันที่') || line.includes('ประกาศ') || line.includes('เรื่อง') || line.includes('แจ้ง');
-                        const isLongContent = line.length > 35 && !line.includes('Facebook') && !line.includes('Log In') && !line.includes('Open app');
-                        
-                        if (isDateOrTitle || isLongContent) {
-                            capturing = true;
-                            postLines.push(line);
+                        // ลบคำว่า ดูเพิ่มเติม / See more ออกจากท้ายบรรทัด
+                        l = l.replace(/\s*(?:\.\.\.|…)?\s*(?:ดูเพิ่มเติม|See more|Seemore)\s*$/i, '').trim();
+                        if (l && !l.includes('Log In') && !l.includes('Open app')) {
+                            postLines.push(l);
                         }
                     }
                 }
