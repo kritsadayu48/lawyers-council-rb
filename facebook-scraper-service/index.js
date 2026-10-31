@@ -15,27 +15,33 @@ app.get('/', (req, res) => {
     res.json({
         status: 'ok',
         service: 'Lawyers Council Facebook Scraper API',
-        version: '1.2.5',
+        version: '1.4.0',
         uptime: process.uptime()
     });
 });
 
 /**
- * แปลง URL ของ Facebook ให้เป็นรูปแบบ m.facebook.com เพื่อหลีกเลี่ยง Login Wall ของ Desktop
+ * แก้ไขปัญหา Short Link / Share Link (เช่น /share/p/...) ให้เป็น Canonical URL
  */
-function toMobileUrl(url) {
-    try {
-        let u = new URL(url);
-        u.hostname = 'm.facebook.com';
-        return u.toString();
-    } catch (e) {
-        return url.replace('www.facebook.com', 'm.facebook.com').replace('facebook.com', 'm.facebook.com');
+async function resolveFacebookUrl(inputUrl) {
+    if (inputUrl.includes('/share/') || inputUrl.includes('fb.watch') || inputUrl.includes('fb.me')) {
+        try {
+            const resp = await fetch(inputUrl, { method: 'HEAD', redirect: 'manual' });
+            const loc = resp.headers.get('location');
+            if (loc) {
+                console.log(`[SCRAPER] Resolved short link ${inputUrl} -> ${loc}`);
+                return loc.split('?')[0];
+            }
+        } catch (e) {
+            console.warn(`[SCRAPER] Failed to resolve short link: ${e.message}`);
+        }
     }
+    return inputUrl;
 }
 
 // Main Scrape Endpoint
 app.post('/scrape', async (req, res) => {
-    const { url, token } = req.body;
+    let { url, token } = req.body;
 
     if (AUTH_TOKEN && token !== AUTH_TOKEN) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -49,7 +55,9 @@ app.post('/scrape', async (req, res) => {
     let browser = null;
 
     try {
-        // Launch Puppeteer with safe Docker-compatible args (DO NOT USE --single-process or --no-zygote)
+        // 1. แปลง Share Link ให้เป็น Canonical URL ตัวเต็ม
+        const canonicalUrl = await resolveFacebookUrl(url);
+
         browser = await puppeteer.launch({
             headless: true,
             executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
@@ -62,22 +70,20 @@ app.post('/scrape', async (req, res) => {
                 '--disable-extensions',
                 '--disable-accelerated-2d-canvas',
                 '--disable-background-networking',
-                '--window-size=412,915'
+                '--window-size=1280,800'
             ]
         });
 
         const page = await browser.newPage();
-
-        // Use Mobile User Agent so Facebook renders the post content without requiring login
         await page.setUserAgent(
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
         );
-        await page.setViewport({ width: 412, height: 915, isMobile: true });
+        await page.setViewport({ width: 1280, height: 800 });
         await page.setExtraHTTPHeaders({
             'Accept-Language': 'th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7'
         });
 
-        // Set cookies if configured
+        // Set cookies if configured on Render
         if (FB_COOKIES) {
             const cookiePairs = FB_COOKIES.split(';').map(c => c.trim()).filter(Boolean);
             const cookies = cookiePairs.map(pair => {
@@ -93,176 +99,185 @@ app.post('/scrape', async (req, res) => {
             }
         }
 
-        const isAlbumUrl = url.includes('media/set') || url.includes('/photos/') || url.includes('photos_albums');
-        const targetMobileUrl = toMobileUrl(url);
-        console.log(`[SCRAPER] Navigating to: ${targetMobileUrl}...`);
+        let fullText = '';
+        const allImageUrls = new Set();
+        let canonicalPostId = null;
 
-        await page.goto(targetMobileUrl, {
-            waitUntil: 'load',
-            timeout: 35000
-        });
-
-        await new Promise(r => setTimeout(r, 2000));
-
-        // 1. คลิกปุ่ม "See more" / "ดูเพิ่มเติม" เพื่อขยายข้อความโพสต์ให้ครบถ้วน 100%
+        // =========================================================================
+        // ขั้้นตอนที่ 1: ดึงข้อความตัวเต็มและภาพหลักผ่าน Facebook Embed Plugin
+        // ข้อดี: Facebook เรนเดอร์ข้อความตัวเต็ม 100% ไม่ติด "ดูเพิ่มเติม" และไม่มี Login Wall
+        // =========================================================================
         try {
-            await page.evaluate(() => {
-                document.querySelectorAll('*').forEach(el => {
-                    const cleanText = (el.innerText || '').replace(/[\s\u00A0]+/g, '').trim();
-                    if (cleanText === 'ดูเพิ่มเติม' || cleanText === 'Seemore' || (el.children.length === 0 && (cleanText.includes('ดูเพิ่มเติม') || cleanText.includes('Seemore')))) {
-                        const btn = el.closest('[role="button"]') || el.parentElement || el;
-                        if (btn) {
-                            btn.click();
-                            ['touchstart', 'touchend', 'click'].forEach(evt => {
-                                btn.dispatchEvent(new MouseEvent(evt, { bubbles: true, cancelable: true, view: window }));
-                            });
-                        }
-                    }
-                });
-            });
-            await new Promise(r => setTimeout(r, 2500));
-        } catch (e) {
-            console.warn(`[SCRAPER] See more click warning: ${e.message}`);
-        }
+            const embedUrl = 'https://www.facebook.com/plugins/post.php?href=' + encodeURIComponent(canonicalUrl) + '&show_text=true&width=500';
+            console.log(`[SCRAPER] Loading Embed Plugin for full text: ${embedUrl}`);
+            await page.goto(embedUrl, { waitUntil: 'networkidle2', timeout: 25000 });
 
-        // 2. ดึงข้อความโพสต์ทั้งหมดอย่างแม่นยำ
-        const postData = await page.evaluate(() => {
-            let fullText = '';
-
-            // วิธีที่ 1: ค้นหาจาก DOM Elements ที่เป็นกล่องข้อความของโพสต์
-            const textContainers = document.querySelectorAll('div[data-ad-preview="message"], div[data-ad-comet-preview="message"]');
-            for (const el of textContainers) {
-                const t = (el.innerText || '').trim();
-                if (t.length > fullText.length) {
-                    fullText = t;
-                }
-            }
-
-            // วิธีที่ 2: วิเคราะห์จากลำดับบรรทัด (Language-agnostic & Structure-based)
-            if (!fullText) {
+            const embedData = await page.evaluate(() => {
                 const bodyText = document.body.innerText || '';
                 const lines = bodyText.split('\n').map(l => l.trim()).filter(Boolean);
                 const postLines = [];
-                let startIndex = -1;
+                let capturing = false;
 
-                // ค้นหาตำแหน่งเริ่มต้น (หลังบรรทัดเวลา เช่น 6d, 1 hr, ชม., วัน หรือสัญลักษณ์ ·)
-                for (let i = 0; i < lines.length; i++) {
-                    const l = lines[i];
-                    if (l.match(/^\d+\s*[dhmwy]/i) || l.includes('·') || l.includes('hrs') || l.includes('mins') || l.includes('ชม.') || l.includes('วัน')) {
-                        startIndex = i + 1;
-                        break;
-                    }
-                }
-
-                // หากยังไม่พบ ให้เริ่มที่บรรทัดแรกที่ยาวเกิน 35 ตัวอักษร
-                if (startIndex === -1) {
-                    for (let i = 0; i < Math.min(lines.length, 10); i++) {
-                        const l = lines[i];
-                        if (l.includes('วันที่') || (l.length > 35 && !l.includes('Facebook') && !l.includes('Log In') && !l.includes('Open app'))) {
-                            startIndex = i;
+                for (const line of lines) {
+                    if (capturing) {
+                        // หยุดเมื่อถึงจำนวนรูป (+72), ข้อมูลเพจ, หรือปุ่มคอมเมนต์
+                        if (/^\+\d+$/.test(line) || /^\d+$/.test(line) || line === 'Comment' || line === 'Share' || line === 'Local business' || line.startsWith('Recent') || line.startsWith('Related')) {
                             break;
                         }
-                    }
-                }
-
-                if (startIndex !== -1) {
-                    for (let i = startIndex; i < lines.length; i++) {
-                        let l = lines[i];
-                        // สิ้นสุดเมื่อเจอตัวเลขจำนวนรูป (+72), ยอดไลก์ (15), หรือหัวข้อถัดไป
-                        if (/^\+\d+$/.test(l) || /^\d+$/.test(l) || l.startsWith('Related') || l.startsWith('Recent') || l.startsWith('เพจที่') || l.startsWith('โพสต์') || l === 'Like' || l === 'Comment' || l === 'Share') {
-                            break;
-                        }
-                        // ลบคำว่า ดูเพิ่มเติม / See more ออกจากท้ายบรรทัด
-                        l = l.replace(/\s*(?:\.\.\.|…)?\s*(?:ดูเพิ่มเติม|See more|Seemore)\s*$/i, '').trim();
-                        if (l && !l.includes('Log In') && !l.includes('Open app')) {
-                            postLines.push(l);
+                        postLines.push(line);
+                    } else {
+                        // เริ่มจับข้อความเมื่อพบบรรทัดขึ้นต้นข่าว หรือบรรทัดที่มีข้อความยาว
+                        if (line.includes('วันที่') || line.includes('ประกาศ') || line.includes('เรื่อง') || (line.length > 30 && !line.includes('Facebook'))) {
+                            capturing = true;
+                            postLines.push(line);
                         }
                     }
                 }
 
-                if (postLines.length > 0) {
-                    fullText = postLines.join('\n');
-                }
-            }
-
-            return { text: fullText.trim() };
-        });
-
-        console.log(`[SCRAPER] Extracted text length: ${postData.text.length}`);
-
-        // 3. สแกนรูปภาพเฉพาะของโพสต์นี้เท่านั้น (หยุดก่อนเริ่ม Recent posts หรือ Related Pages)
-        console.log(`[SCRAPER] Scanning post images...`);
-        const allImageUrls = new Set();
-
-        const postImgs = await page.evaluate((isAlbum) => {
-            const stopKeywords = ['recent posts', 'โพสต์ล่าสุด', 'related pages', 'เพจที่เกี่ยวข้อง'];
-            let stopTop = 999999;
-
-            if (!isAlbum) {
-                document.querySelectorAll('h1, h2, h3, h4, span, div').forEach(el => {
-                    const txt = (el.innerText || '').trim().toLowerCase();
-                    if (stopKeywords.some(k => txt === k || txt.startsWith(k))) {
-                        const rect = el.getBoundingClientRect();
-                        const pos = rect.top + window.scrollY;
-                        if (pos > 100 && pos < stopTop) {
-                            stopTop = pos;
+                // ดึงรูปภาพจาก Embed
+                const imgs = [];
+                document.querySelectorAll('img').forEach(img => {
+                    const src = img.src || '';
+                    if (src.includes('scontent') || src.includes('fbcdn')) {
+                        if (img.width >= 100 && img.height >= 100) {
+                            imgs.push(src);
                         }
                     }
                 });
-            }
 
-            const list = [];
-            document.querySelectorAll('img').forEach(img => {
-                const src = img.src || '';
-                if (!src || (!src.includes('scontent') && !src.includes('fbcdn'))) return;
-                if (src.includes('emoji') || src.includes('rsrc.php') || src.includes('p50x50') || src.includes('p100x100') || src.includes('silhouette')) return;
-                const alt = (img.alt || '').toLowerCase();
-                if (alt.includes('profile') || alt.includes('โปรไฟล์')) return;
-                const w = img.naturalWidth || img.width || 0;
-                const h = img.naturalHeight || img.height || 0;
-                const rect = img.getBoundingClientRect();
-                const top = rect.top + window.scrollY;
+                // ดึง Canonical Post URL หรือ Post ID
+                let postId = null;
+                document.querySelectorAll('a').forEach(a => {
+                    const href = a.href || '';
+                    const match = href.match(/posts\/(\d+)/);
+                    if (match) postId = match[1];
+                });
 
-                if (w >= 140 && h >= 140 && (isAlbum || top < stopTop)) {
-                    list.push(src);
-                }
+                return { text: postLines.join('\n'), imgs, postId };
             });
 
-            return list;
-        }, isAlbumUrl);
+            if (embedData.text && embedData.text.length > 0) {
+                fullText = embedData.text;
+            }
+            if (embedData.imgs) {
+                embedData.imgs.forEach(u => allImageUrls.add(u));
+            }
+            if (embedData.postId) {
+                canonicalPostId = embedData.postId;
+            }
+            console.log(`[SCRAPER] Embed text extracted! Length: ${fullText.length}, Images: ${allImageUrls.size}, PostID: ${canonicalPostId}`);
+        } catch (embedErr) {
+            console.warn(`[SCRAPER] Embed Plugin warning: ${embedErr.message}`);
+        }
 
-        postImgs.forEach(u => allImageUrls.add(u));
+        // =========================================================================
+        // ขั้นตอนที่ 2: หากพบ Post ID ให้เปิดหน้าอัลบั้ม media/set/?set=pcb.<id>
+        // เพื่อสแกนดึงรูปภาพเพิ่มเติมให้ได้มากที่สุด (สูงสุด 24-70+ รูป)
+        // =========================================================================
+        if (canonicalPostId) {
+            try {
+                const albumUrl = `https://www.facebook.com/media/set/?set=pcb.${canonicalPostId}`;
+                console.log(`[SCRAPER] Navigating to album: ${albumUrl}...`);
+                await page.goto(albumUrl, { waitUntil: 'networkidle2', timeout: 25000 });
 
-        // หากเป็นอัลบั้ม ให้เลื่อนหน้าจอลงเพื่อดึงรูปภาพทั้งหมด
-        if (isAlbumUrl) {
-            for (let i = 0; i < 15; i++) {
-                await page.evaluate(() => window.scrollBy(0, 1000));
-                await new Promise(r => setTimeout(r, 400));
-                const moreImgs = await page.evaluate(() => {
-                    const l = [];
+                // เลื่อนหน้าจอเพื่อโหลดรูปภาพในอัลบั้ม
+                for (let scroll = 0; scroll < 6; scroll++) {
+                    const batch = await page.evaluate(() => {
+                        const list = [];
+                        document.querySelectorAll('img').forEach(i => {
+                            const src = i.src || '';
+                            if (src && (src.includes('scontent') || src.includes('fbcdn'))) {
+                                if (i.width >= 120 && i.height >= 120) list.push(src);
+                            }
+                        });
+                        window.scrollBy(0, 900);
+                        return list;
+                    });
+                    batch.forEach(src => allImageUrls.add(src));
+                    await new Promise(r => setTimeout(r, 400));
+                }
+                console.log(`[SCRAPER] Album scan finished! Total unique images now: ${allImageUrls.size}`);
+            } catch (albumErr) {
+                console.warn(`[SCRAPER] Album scan warning: ${albumErr.message}`);
+            }
+        }
+
+        // =========================================================================
+        // ขั้นตอนที่ 3: Fallback สำรองผ่าน m.facebook.com หาก Embed ไม่พบข้อความ
+        // =========================================================================
+        if (!fullText) {
+            try {
+                const mobileUrl = canonicalUrl.replace('www.facebook.com', 'm.facebook.com').replace('facebook.com', 'm.facebook.com');
+                console.log(`[SCRAPER] Fallback to mobile: ${mobileUrl}...`);
+                await page.goto(mobileUrl, { waitUntil: 'load', timeout: 30000 });
+                await new Promise(r => setTimeout(r, 2000));
+
+                // คลิก ดูเพิ่มเติม
+                await page.evaluate(() => {
+                    document.querySelectorAll('*').forEach(el => {
+                        const cleanText = (el.innerText || '').replace(/[\s\u00A0]+/g, '').trim();
+                        if (cleanText === 'ดูเพิ่มเติม' || cleanText === 'Seemore' || (el.children.length === 0 && (cleanText.includes('ดูเพิ่มเติม') || cleanText.includes('Seemore')))) {
+                            const btn = el.closest('[role="button"]') || el.parentElement || el;
+                            if (btn) btn.click();
+                        }
+                    });
+                });
+                await new Promise(r => setTimeout(r, 2000));
+
+                const mobileData = await page.evaluate(() => {
+                    const bodyText = document.body.innerText || '';
+                    const lines = bodyText.split('\n').map(l => l.trim()).filter(Boolean);
+                    const postLines = [];
+                    let startIndex = -1;
+
+                    for (let i = 0; i < lines.length; i++) {
+                        const l = lines[i];
+                        if (l.match(/^\d+\s*[dhmwy]/i) || l.includes('·') || l.includes('ชม.') || l.includes('วัน')) {
+                            startIndex = i + 1;
+                            break;
+                        }
+                    }
+
+                    if (startIndex !== -1) {
+                        for (let i = startIndex; i < lines.length; i++) {
+                            let l = lines[i];
+                            if (/^\+\d+$/.test(l) || /^\d+$/.test(l) || l.startsWith('Related') || l.startsWith('Recent')) {
+                                break;
+                            }
+                            l = l.replace(/\s*(?:\.\.\.|…)?\s*(?:ดูเพิ่มเติม|See more|Seemore)\s*$/i, '').trim();
+                            if (l && !l.includes('Log In') && !l.includes('Open app')) {
+                                postLines.push(l);
+                            }
+                        }
+                    }
+
+                    const imgs = [];
                     document.querySelectorAll('img').forEach(img => {
                         const src = img.src || '';
-                        if (!src || (!src.includes('scontent') && !src.includes('fbcdn'))) return;
-                        if (src.includes('emoji') || src.includes('rsrc.php') || src.includes('p50x50') || src.includes('p100x100') || src.includes('silhouette')) return;
-                        const w = img.naturalWidth || img.width || 0;
-                        const h = img.naturalHeight || img.height || 0;
-                        if (w >= 140 && h >= 140) l.push(src);
+                        if (src.includes('scontent') || src.includes('fbcdn')) {
+                            if (img.width >= 140 && img.height >= 140) imgs.push(src);
+                        }
                     });
-                    return l;
+
+                    return { text: postLines.join('\n'), imgs };
                 });
-                moreImgs.forEach(u => allImageUrls.add(u));
+
+                if (mobileData.text) fullText = mobileData.text;
+                if (mobileData.imgs) mobileData.imgs.forEach(u => allImageUrls.add(u));
+            } catch (mErr) {
+                console.warn(`[SCRAPER] Mobile fallback error: ${mErr.message}`);
             }
         }
 
         const images = Array.from(allImageUrls);
-        console.log(`[SCRAPER] Scrape completed! Found ${images.length} images.`);
+        console.log(`[SCRAPER] Scrape completed successfully! Text length: ${fullText.length}, Photos: ${images.length}`);
 
         await browser.close();
         browser = null;
 
         return res.json({
             success: true,
-            text: postData.text,
+            text: fullText,
             images: images,
             count: images.length,
             url: url

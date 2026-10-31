@@ -374,13 +374,18 @@ javascript:(function(){
     document.head.appendChild(style);
     document.body.appendChild(bar);
 
-    // ขยายข้อความ ดูเพิ่มเติม
+    // ขยายข้อความ ดูเพิ่มเติม และคลิกดูรูปภาพอัลบั้ม (+XX) อัตโนมัติ
     try {
-        var buttons = document.querySelectorAll('div[role="button"]');
+        var buttons = document.querySelectorAll('div[role="button"], span, a');
         for (var i = 0; i < buttons.length; i++) {
-            var txt = buttons[i].innerText || '';
+            var txt = (buttons[i].innerText || '').trim();
             if (txt.indexOf('ดูเพิ่มเติม') !== -1 || txt.indexOf('See more') !== -1) {
-                buttons[i].click();
+                var btn = buttons[i].closest('[role="button"]') || buttons[i];
+                btn.click();
+            }
+            if (/^\+\d+$/.test(txt)) {
+                var plusBtn = buttons[i].closest('[role="button"]') || buttons[i];
+                plusBtn.click();
             }
         }
     } catch(e) {}
@@ -400,31 +405,35 @@ javascript:(function(){
             var img = all[j];
             var src = img.src || '';
             if (!src || (src.indexOf('scontent') === -1 && src.indexOf('fbcdn') === -1)) continue;
-            if (src.indexOf('emoji') !== -1 || src.indexOf('rsrc.php') !== -1 || src.indexOf('p50x50') !== -1 || src.indexOf('p100x100') !== -1 || src.indexOf('p160x160') !== -1 || src.indexOf('silhouette') !== -1) continue;
+            if (src.indexOf('emoji') !== -1 || src.indexOf('rsrc.php') !== -1 || src.indexOf('p50x50') !== -1 || src.indexOf('p100x100') !== -1 || src.indexOf('silhouette') !== -1) continue;
             var alt = (img.alt || '').toLowerCase();
             if (alt.indexOf('profile') !== -1 || alt.indexOf('โปรไฟล์') !== -1) continue;
             var w = img.naturalWidth || img.width || 0;
             var h = img.naturalHeight || img.height || 0;
-            if (w >= 160 && h >= 140) {
+            if ((w >= 90 && h >= 90) || (img.naturalWidth >= 120 && img.naturalHeight >= 120)) {
                 if (imgs.indexOf(src) === -1) {
                     imgs.push(src);
                 }
             }
         }
         var cntEl = document.getElementById('fb-import-cnt');
-        if (cntEl) cntEl.innerText = 'พบแล้ว ' + imgs.length + ' รูป (กำลังเลื่อนหน้าจออัตโนมัติ)';
+        if (cntEl) cntEl.innerText = 'พบแล้ว ' + imgs.length + ' รูป (กำลังสแกนและเลื่อนหน้าจออัตโนมัติ)';
     }
 
     // สแกนรอบแรกทันที
     scanImages();
 
     var scrollTicks = 0;
-    var maxTicks = 18; // เลื่อนประมาณ 4-5 วินาที
+    var maxTicks = 35; // สแกนต่อเนื่องประมาณ 10-12 วินาทีเพื่อให้โหลดครบ 70+ รูป
     var prevCount = 0;
     var stableTicks = 0;
 
     var timer = setInterval(function() {
-        window.scrollBy(0, 900);
+        window.scrollBy(0, 950);
+        // หากเปิดอยู่ในหน้าต่าง Dialog หรือ Theater ให้เลื่อนกล่องด้านในด้วย
+        var dialogs = document.querySelectorAll('div[role="dialog"], div[role="main"]');
+        dialogs.forEach(function(d) { d.scrollTop += 950; });
+
         scanImages();
         scrollTicks++;
 
@@ -435,11 +444,10 @@ javascript:(function(){
             prevCount = imgs.length;
         }
 
-        // หากถึงด้านล่างหรือไม่มีรูปใหม่เพิ่มขึ้นแล้ว ให้ส่งข้อมูล
-        if (scrollTicks >= maxTicks || stableTicks >= 5) {
+        if (scrollTicks >= maxTicks || stableTicks >= 8) {
             finishAndSend();
         }
-    }, 280);
+    }, 300);
 
     document.getElementById('fb-import-stop').onclick = function() {
         finishAndSend();
