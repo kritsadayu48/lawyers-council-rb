@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
     res.json({
         status: 'ok',
         service: 'Lawyers Council Facebook Scraper API',
-        version: '1.2.0',
+        version: '1.2.1',
         uptime: process.uptime()
     });
 });
@@ -125,36 +125,57 @@ app.post('/scrape', async (req, res) => {
         const postData = await page.evaluate(() => {
             let fullText = '';
 
-            const textContainers = document.querySelectorAll('div[data-ad-preview="message"], div[dir="auto"]');
+            // วิธีที่ 1: ค้นหาจาก DOM Elements ที่เป็นกล่องข้อความของโพสต์
+            const textContainers = document.querySelectorAll('div[data-ad-preview="message"], div[data-ad-comet-preview="message"]');
             for (const el of textContainers) {
                 const t = (el.innerText || '').trim();
-                if (t.length > fullText.length && !t.includes('Log In') && !t.includes('Open app')) {
+                if (t.length > fullText.length) {
                     fullText = t;
                 }
             }
 
+            // วิธีที่ 2: วิเคราะห์จากเนื้อหาทั้งหมดในหน้า
             if (!fullText) {
                 const bodyText = document.body.innerText || '';
                 const lines = bodyText.split('\n').map(l => l.trim()).filter(Boolean);
-                const filteredLines = [];
-                let started = false;
+                const postLines = [];
+                let capturing = false;
 
-                for (const line of lines) {
-                    if (line.includes('Log In') || line.includes('Open app') || line.includes('Facebook') || line.includes('สภาทนายความจังหวัดราชบุรี')) {
-                        if (started) break;
-                        continue;
-                    }
-                    if (line.match(/^\d+[dhmw]/) || line.includes('วันที่') || line.length > 25) {
-                        started = true;
-                    }
-                    if (started) {
-                        if (line.includes('Related Pages') || line.includes('Recent posts') || line.includes('Recent Posts')) {
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+
+                    // คำสั่งหยุดเมื่อถึงส่วนท้ายของโพสต์ (ปุ่มตัวเลข, สถิติ, โพสต์ถัดไป)
+                    if (capturing) {
+                        if (
+                            /^\+\d+$/.test(line) ||
+                            /^\d+$/.test(line) ||
+                            line.startsWith('Recent posts') ||
+                            line.startsWith('Recent Posts') ||
+                            line.startsWith('Related Pages') ||
+                            line.startsWith('โพสต์ล่าสุด') ||
+                            line === 'Like' || line === 'Comment' || line === 'Share' ||
+                            line === 'ถูกใจ' || line === 'แสดงความคิดเห็น' || line === 'แชร์'
+                        ) {
                             break;
                         }
-                        filteredLines.push(line);
+                        if (line !== 'See more' && line !== 'ดูเพิ่มเติม') {
+                            postLines.push(line);
+                        }
+                    } else {
+                        // เริ่มจับข้อความเมื่อพบบรรทัดขึ้นต้นข่าว หรือบรรทัดที่มีข้อความยาว
+                        const isDateOrTitle = line.includes('วันที่') || line.includes('ประกาศ') || line.includes('เรื่อง') || line.includes('แจ้ง');
+                        const isLongContent = line.length > 35 && !line.includes('Facebook') && !line.includes('Log In') && !line.includes('Open app');
+                        
+                        if (isDateOrTitle || isLongContent) {
+                            capturing = true;
+                            postLines.push(line);
+                        }
                     }
                 }
-                fullText = filteredLines.join('\n');
+
+                if (postLines.length > 0) {
+                    fullText = postLines.join('\n');
+                }
             }
 
             return { text: fullText.trim() };
