@@ -36,7 +36,7 @@ return [
     ],
 
     'facebook_scraper' => [
-        'url' => env('FACEBOOK_SCRAPER_URL'),
+        'url' => env('FACEBOOK_SCRAPER_URL', 'https://facebook-scraper-9pek.onrender.com'),
         'token' => env('FACEBOOK_SCRAPER_TOKEN'),
     ],
 

@@ -31,3 +31,4 @@ EXPOSE 8080
 
 # คำสั่งรัน Server
 CMD ["node", "index.js"]
+
