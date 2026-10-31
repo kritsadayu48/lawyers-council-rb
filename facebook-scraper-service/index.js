@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
     res.json({
         status: 'ok',
         service: 'Lawyers Council Facebook Scraper API',
-        version: '1.2.3',
+        version: '1.2.4',
         uptime: process.uptime()
     });
 });
@@ -108,14 +108,19 @@ app.post('/scrape', async (req, res) => {
         try {
             await page.evaluate(() => {
                 document.querySelectorAll('*').forEach(el => {
-                    const t = (el.innerText || '').trim();
-                    if (t === 'ดูเพิ่มเติม' || t === 'See more') {
-                        const btn = el.closest('[role="button"]') || el.parentElement;
-                        if (btn) btn.click();
+                    const cleanText = (el.innerText || '').replace(/[\s\u00A0]+/g, '').trim();
+                    if (cleanText === 'ดูเพิ่มเติม' || cleanText === 'Seemore' || (el.children.length === 0 && (cleanText.includes('ดูเพิ่มเติม') || cleanText.includes('Seemore')))) {
+                        const btn = el.closest('[role="button"]') || el.parentElement || el;
+                        if (btn) {
+                            btn.click();
+                            ['touchstart', 'touchend', 'click'].forEach(evt => {
+                                btn.dispatchEvent(new MouseEvent(evt, { bubbles: true, cancelable: true, view: window }));
+                            });
+                        }
                     }
                 });
             });
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 2500));
         } catch (e) {
             console.warn(`[SCRAPER] See more click warning: ${e.message}`);
         }
