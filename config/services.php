@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'facebook_scraper' => [
+        'url' => env('FACEBOOK_SCRAPER_URL'),
+        'token' => env('FACEBOOK_SCRAPER_TOKEN'),
+    ],
+
 ];

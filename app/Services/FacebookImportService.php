@@ -183,6 +183,71 @@ class FacebookImportService
     }
 
     /**
+     * ดึงข้อมูลโพสต์และรูปภาพทั้งหมดจากลิงก์ Facebook (รองรับ Google Cloud Run Scraper)
+     */
+    public static function scrapeFacebookUrl(string $url): array
+    {
+        $result = [
+            'title' => '',
+            'content' => '',
+            'images' => [],
+            'error' => null,
+        ];
+
+        // 1. เรียกใช้งาน Google Cloud Run Scraper หากมีการตั้งค่าใน .env
+        $scraperUrl = config('services.facebook_scraper.url');
+        if (!empty($scraperUrl)) {
+            try {
+                $response = Http::timeout(75)->post(rtrim($scraperUrl, '/') . '/scrape', [
+                    'url' => $url,
+                    'token' => config('services.facebook_scraper.token'),
+                ]);
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    if (!empty($json['success'])) {
+                        $rawText = $json['text'] ?? '';
+                        $parsed = self::parseText($rawText);
+
+                        return [
+                            'title' => $parsed['title'],
+                            'content' => $parsed['content'],
+                            'published_at' => $parsed['published_at'],
+                            'images' => $json['images'] ?? [],
+                            'error' => null,
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        // 2. สำรอง: หากยังไม่ได้ตั้ง Cloud Scraper ให้ใช้วิธีดึงผ่าน Open Graph
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language' => 'th-TH,th;q=0.9,en;q=0.8',
+            ])->timeout(15)->get($url);
+
+            if ($response->successful()) {
+                $html = $response->body();
+                if (preg_match('/<meta[^>]+property=["\']og:title["\'][^>]+content=["\'](.*?)["\']/is', $html, $mTitle)) {
+                    $result['title'] = html_entity_decode(trim($mTitle[1]), ENT_QUOTES, 'UTF-8');
+                }
+                if (preg_match('/<meta[^>]+property=["\']og:description["\'][^>]+content=["\'](.*?)["\']/is', $html, $mDesc)) {
+                    $result['content'] = html_entity_decode(trim($mDesc[1]), ENT_QUOTES, 'UTF-8');
+                }
+            }
+        } catch (\Throwable $e) {
+            $result['error'] = $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    /**
      * ดำเนินการสร้างข่าวสารและดาวน์โหลดรูปภาพเบื้องต้น (สร้าง Record พร้อมรูปปกและรูปแรกๆ)
      */
     public static function processImport(
@@ -192,6 +257,7 @@ class FacebookImportService
         ?Carbon $publishedAt = null,
         bool $isPublished = true
     ): News {
+        @set_time_limit(180);
         // 1. แยก Title, Content และตรวจสอบวันที่
         $parsed = self::parseText($text);
         $title = $parsed['title'];
