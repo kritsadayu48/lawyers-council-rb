@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
     res.json({
         status: 'ok',
         service: 'Lawyers Council Facebook Scraper API',
-        version: '1.2.1',
+        version: '1.2.2',
         uptime: process.uptime()
     });
 });
@@ -107,16 +107,18 @@ app.post('/scrape', async (req, res) => {
         // 1. คลิกปุ่ม "See more" / "ดูเพิ่มเติม" เพื่อขยายข้อความโพสต์ให้ครบถ้วน 100%
         try {
             await page.evaluate(() => {
-                const links = Array.from(document.querySelectorAll('a, span, div[role="button"]'));
-                for (const el of links) {
-                    const txt = (el.innerText || '').trim();
-                    if (txt === 'See more' || txt === 'ดูเพิ่มเติม' || txt.includes('See more') || txt.includes('ดูเพิ่มเติม')) {
-                        el.click();
-                        break;
+                const all = Array.from(document.querySelectorAll('*'));
+                for (const el of all) {
+                    if (el.children.length === 0) {
+                        const t = (el.innerText || '').trim();
+                        if (t === 'ดูเพิ่มเติม' || t === 'See more' || t.includes('ดูเพิ่มเติม') || t.includes('See more')) {
+                            el.click();
+                            if (el.parentElement) el.parentElement.click();
+                        }
                     }
                 }
             });
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 2000));
         } catch (e) {
             console.warn(`[SCRAPER] See more click warning: ${e.message}`);
         }
