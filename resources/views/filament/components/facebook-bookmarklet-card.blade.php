@@ -1,5 +1,8 @@
 @php
-    $targetUrl = url('/admin/news/facebook-import');
+    $currentHost = request()->getHttpHost();
+    $targetUrl = (str_contains($currentHost, 'localhost') || str_contains($currentHost, '127.0.0.1'))
+        ? url('/admin/news/facebook-import')
+        : 'https://' . $currentHost . '/admin/news/facebook-import';
     $bookmarkletJs = \App\Services\FacebookImportService::generateBookmarkletJs($targetUrl);
 @endphp
 
@@ -15,12 +18,12 @@
                 <h4 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>⚡ ปุ่มลัดดูดข่าวคลิกเดียว (Bookmarklet)</span>
                     <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                        แนะนำที่สุด • เร็ว & รูปมาครบ 100%
+                        แนะนำที่สุด • ดึงรูปและเนื้อหาครบ
                     </span>
                 </h4>
             </div>
             <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                เนื่องจาก Facebook มีระบบป้องกันการเข้าถึงจากเซิร์ฟเวอร์ การใช้ <strong>ปุ่มลัดบนเบราว์เซอร์</strong> ขณะเปิดดูโพสต์บน Facebook จะทำให้ดึงข้อความตัวเต็มและรูปภาพทั้งหมดในอัลบั้มได้สมบูรณ์แบบที่สุดโดยไม่ต้องพิมพ์เอง
+                ขณะเปิดดูโพสต์บน Facebook ของเพจสภาทนายความ ให้กดปุ่มนี้บนแถบบุ๊กมาร์ก ระบบจะดูดข้อความตัวเต็มและรูปภาพความละเอียดสูงทั้งหมดมาสร้างข่าวในเว็บให้อัตโนมัติ
             </p>
         </div>
     </div>
@@ -30,12 +33,12 @@
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div class="text-center sm:text-left">
                 <span class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    👇 ลากปุ่มนี้ขึ้นไปวางที่ "แถบที่คั่นหน้า" (Bookmarks Bar) ของเบราว์เซอร์:
+                    👇 ลากปุ่มนี้ขึ้นไปวางที่ "แถบที่คั่นหน้า" (Bookmarks Bar) ด้านบนของเบราว์เซอร์:
                 </span>
                 <div class="mt-2 inline-flex items-center gap-2">
                     <!-- ปุ่มสำหรับลากไปวางบนแถบ Bookmark -->
                     <a href="{{ $bookmarkletJs }}"
-                       onclick="event.preventDefault(); alert('💡 วิธีใช้: กรุณาคลิกค้างแล้วลาก (Drag & Drop) ปุ่มนี้ขึ้นไปวางบน แถบที่คั่นหน้า (Bookmarks Bar) ด้านบนของเบราว์เซอร์ Chrome / Edge ครับ');"
+                       onclick="event.preventDefault(); alert('💡 วิธีติดตั้ง: กรุณาคลิกค้างแล้วลาก (Drag & Drop) ปุ่มนี้ขึ้นไปวางบน แถบที่คั่นหน้า (Bookmarks Bar) ด้านบนของเบราว์เซอร์ Chrome / Edge ครับ');"
                        draggable="true"
                        title="ลากปุ่มนี้ไปวางบน Bookmarks bar ของเบราว์เซอร์"
                        class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 hover:from-blue-700 hover:to-indigo-700 hover:scale-105 active:scale-95 transition cursor-grab active:cursor-grabbing border border-blue-400/30">
@@ -71,9 +74,8 @@
             </div>
             <div class="flex items-start gap-2">
                 <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 text-[11px]">3</span>
-                <span class="text-slate-600 dark:text-slate-400">ระบบโหลดรูปและเนื้อหาเข้าเว็บให้เสร็จสรรพ ตรวจทานแล้วกดบันทึก!</span>
+                <span class="text-slate-600 dark:text-slate-400">ระบบโหลดรูปจริงและเนื้อหาเข้าเว็บให้ ตรวจทานแล้วกดบันทึก!</span>
             </div>
         </div>
     </div>
 </div>
-

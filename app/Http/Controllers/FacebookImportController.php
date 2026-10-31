@@ -10,47 +10,21 @@ use Illuminate\Http\Request;
 class FacebookImportController extends Controller
 {
     /**
-     * รับข้อมูลนำเข้าจาก Bookmarklet หรือแบบฟอร์มภายนอก
+     * หน้าจอรับข้อมูลจาก Bookmarklet หรือนำเข้าด่วน
      */
     public function handle(Request $request)
     {
-        // 1. ตรวจสอบสิทธิ์ผู้ดูแลระบบ
+        // 1. ต้องเข้าสู่ระบบผู้ดูแลระบบก่อน
         if (!auth()->check()) {
-            session([
-                'pending_fb_import' => [
-                    'text' => $request->input('text'),
-                    'images_json' => $request->input('images_json'),
-                    'source_url' => $request->input('source_url'),
-                ]
-            ]);
-
-            return redirect('/admin/login')->with('warning', 'กรุณาเข้าสู่ระบบผู้ดูแลระบบก่อนเพื่อดำเนินการนำเข้าข่าวสาร');
+            return redirect('/admin/login')->with('warning', 'กรุณาเข้าสู่ระบบผู้ดูแลระบบก่อนดำเนินการนำเข้าข่าวสาร');
         }
 
-        // กรณีเปิดผ่าน GET ตรงๆ ให้พาไปหน้ารายการข่าวสาร
+        // กรณีเปิดผ่าน GET (Bookmarklet จะเปิดหน้านี้พร้อม #data=...)
         if ($request->isMethod('GET')) {
-            if (session()->has('pending_fb_import')) {
-                $pending = session()->pull('pending_fb_import');
-                $text = $pending['text'] ?? '';
-                $imagesJson = $pending['images_json'] ?? '[]';
-                $images = json_decode($imagesJson, true) ?: [];
-
-                if (!empty($text)) {
-                    $news = FacebookImportService::processImport($text, $images);
-                    Notification::make()
-                        ->title('นำเข้าข่าวสารจาก Facebook สำเร็จ!')
-                        ->body('ดาวน์โหลดรูปภาพและเนื้อหาเรียบร้อยแล้ว แอดมินสามารถตรวจสอบและกดบันทึกได้ทันที')
-                        ->success()
-                        ->send();
-
-                    return redirect(NewsResource::getUrl('edit', ['record' => $news->id]));
-                }
-            }
-
-            return redirect(NewsResource::getUrl('index'));
+            return view('filament.pages.facebook-import-receiver');
         }
 
-        // 2. รับข้อมูล POST จาก Bookmarklet
+        // กรณีมีการส่ง POST ตรงเข้ามา
         $text = (string) $request->input('text', '');
         $imagesJson = (string) $request->input('images_json', '[]');
         $images = json_decode($imagesJson, true) ?: [];
@@ -65,13 +39,12 @@ class FacebookImportController extends Controller
             return redirect(NewsResource::getUrl('index'));
         }
 
-        // 3. ดำเนินการสร้างข่าวสารและดาวน์โหลดรูปภาพ
         try {
             $news = FacebookImportService::processImport(
                 text: $text,
                 imageUrls: $images,
                 categoryId: null,
-                publishedAt: now(),
+                publishedAt: null,
                 isPublished: true
             );
 
@@ -79,7 +52,7 @@ class FacebookImportController extends Controller
 
             Notification::make()
                 ->title('🎉 นำเข้าข่าวจาก Facebook สำเร็จเรียบร้อย!')
-                ->body("ดึงเนื้อหาและดาวน์โหลดรูปภาพเข้ามายังเซิร์ฟเวอร์แล้ว {$imgCount} ภาพ สามารถตรวจสอบและปรับแต่งได้เลย")
+                ->body("ดึงเนื้อหาและดาวน์โหลดรูปภาพเข้ามาแล้ว {$imgCount} ภาพ สามารถตรวจสอบและปรับแต่งได้เลย")
                 ->success()
                 ->duration(8000)
                 ->send();
@@ -95,5 +68,52 @@ class FacebookImportController extends Controller
             return redirect(NewsResource::getUrl('index'));
         }
     }
-}
 
+    /**
+     * API ประมวลผลและสร้างข่าวสาร (Same-Origin Fetch จากหน้า Receiver)
+     */
+    public function process(Request $request)
+    {
+        if (!auth()->check()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $text = trim((string) $request->input('text', ''));
+        $images = (array) $request->input('images', []);
+        $categoryId = $request->input('category_id') ? (int) $request->input('category_id') : null;
+
+        if (empty($text) && empty($images)) {
+            return response()->json(['success' => false, 'message' => 'ไม่พบข้อความหรือรูปภาพสำหรับสร้างข่าว'], 422);
+        }
+
+        try {
+            $news = FacebookImportService::processImport(
+                text: $text,
+                imageUrls: $images,
+                categoryId: $categoryId,
+                publishedAt: null,
+                isPublished: true
+            );
+
+            $imgCount = ($news->cover_image ? 1 : 0) + count($news->gallery_images ?? []);
+
+            Notification::make()
+                ->title('🎉 นำเข้าข่าวจาก Facebook สำเร็จ!')
+                ->body("ดึงเนื้อหาและดาวน์โหลดรูปภาพ {$imgCount} ภาพเรียบร้อยแล้ว แอดมินสามารถตรวจสอบหรือแก้ไขได้ทันที")
+                ->success()
+                ->duration(8000)
+                ->send();
+
+            return response()->json([
+                'success' => true,
+                'news_id' => $news->id,
+                'redirect' => NewsResource::getUrl('edit', ['record' => $news->id]),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+}

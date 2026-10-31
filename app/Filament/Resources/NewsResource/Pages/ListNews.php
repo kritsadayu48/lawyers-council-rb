@@ -31,14 +31,20 @@ class ListNews extends ListRecords
                 ->form([
                     Forms\Components\View::make('filament.components.facebook-bookmarklet-card'),
 
-                    Forms\Components\Section::make('หรือ วางลิงก์ / ข้อความโพสต์ในหน้านี้')
-                        ->description('กรอกลิงก์หรือข้อความหากต้องการนำเข้าผ่านหน้าจัดการนี้โดยตรง')
+                    Forms\Components\Section::make('หรือ วางข้อความโพสต์ / ลิงก์ในหน้านี้')
+                        ->description('ก๊อปปี้ข้อความจากโพสต์ Facebook มาวางที่นี่ ระบบจะช่วยแยกหัวข้อ วันที่ และจัดย่อหน้าให้อัตโนมัติ')
                         ->schema([
+                            Forms\Components\Textarea::make('raw_content')
+                                ->label('ข้อความโพสต์จาก Facebook (แนะนำ: ก๊อปปี้ข้อความมาวางที่นี่)')
+                                ->placeholder("วางข้อความที่ก๊อปปี้มาจาก Facebook ที่นี่...\nระบบจะแยกหัวข้อข่าว วันที่ลงข่าว และเนื้อหาให้อัตโนมัติ")
+                                ->helperText('💡 แนะนำที่สุด: ก๊อปปี้ข้อความทั้งหมดจาก Facebook มาวางที่นี่ ระบบจะตรวจจับหัวข้อและวันที่ให้อัตโนมัติ')
+                                ->rows(6),
+
                             Forms\Components\TextInput::make('facebook_url')
-                                ->label('ลิงก์โพสต์ Facebook')
+                                ->label('หรือ วางลิงก์โพสต์ Facebook')
                                 ->placeholder('เช่น https://www.facebook.com/RachaburiLawyer/posts/...')
                                 ->url()
-                                ->helperText('นำลิงก์โพสต์จากหน้าเพจสภาทนายความมาวางที่นี่'),
+                                ->helperText('หาก Facebook บล็อกการเข้าถึงจากภายนอก ให้เน้นใช้การก๊อปปี้ข้อความมาวางด้านบนแทน'),
 
                             Forms\Components\Select::make('category_id')
                                 ->label('หมวดหมู่ข่าว')
@@ -50,14 +56,9 @@ class ListNews extends ListRecords
                                 ->label('เผยแพร่ทันทีหลังนำเข้า')
                                 ->default(true),
 
-                            Forms\Components\Textarea::make('raw_content')
-                                ->label('ข้อความโพสต์สำรอง (กรณีเซิร์ฟเวอร์ติดบล็อก Facebook)')
-                                ->placeholder('หากลิงก์โพสต์ดึงไม่ได้ ให้คัดลอกข้อความจาก Facebook มาวางที่นี่ ระบบจะตัดบรรทัดแรกเป็นหัวข้อให้อัตโนมัติ')
-                                ->rows(4),
-
                             Forms\Components\Textarea::make('raw_images')
                                 ->label('ลิงก์รูปภาพเพิ่มเติม (Optional)')
-                                ->placeholder('วาง URL รูปภาพ Facebook (บรรทัดละ 1 ลิงก์) หากต้องการให้ระบบดาวน์โหลดมาเพิ่ม')
+                                ->placeholder("วาง URL รูปภาพ Facebook (บรรทัดละ 1 ลิงก์)\nระบบจะดาวน์โหลดเฉพาะภาพจริง (>10KB) มาเก็บในคลังภาพให้อัตโนมัติ")
                                 ->rows(3),
                         ]),
                 ])
@@ -70,7 +71,7 @@ class ListNews extends ListRecords
 
                     if (empty($url) && empty($rawContent)) {
                         Notification::make()
-                            ->title('กรุณาระบุลิงก์ หรือวางข้อความโพสต์')
+                            ->title('กรุณาระบุข้อความ หรือวางลิงก์โพสต์')
                             ->warning()
                             ->send();
                         return;
@@ -100,7 +101,7 @@ class ListNews extends ListRecords
                     if (empty($textToUse)) {
                         Notification::make()
                             ->title('Facebook ป้องกันการเข้าถึงโพสต์นี้จากเซิร์ฟเวอร์')
-                            ->body('แนะนำให้ใช้ "ปุ่มลัดดูดข่าว (Bookmarklet)" บนหน้า Facebook หรือคัดลอกข้อความโพสต์มาวางในช่อง "ข้อความโพสต์สำรอง"')
+                            ->body('กรุณาคัดลอก (Copy) ข้อความจาก Facebook มาวางในช่อง "ข้อความโพสต์จาก Facebook" หรือใช้ปุ่มลัด Bookmarklet (📌 ส่งข่าวเข้าเว็บสภา) บนหน้า Facebook ครับ')
                             ->danger()
                             ->persistent()
                             ->send();
@@ -112,7 +113,7 @@ class ListNews extends ListRecords
                             text: $textToUse,
                             imageUrls: $imageUrls,
                             categoryId: $categoryId,
-                            publishedAt: now(),
+                            publishedAt: null,
                             isPublished: $isPublished
                         );
 
@@ -120,7 +121,7 @@ class ListNews extends ListRecords
 
                         Notification::make()
                             ->title('🎉 นำเข้าข่าวจาก Facebook สำเร็จ!')
-                            ->body("ดึงเนื้อหาและดาวน์โหลดรูปภาพ {$imgCount} ภาพเรียบร้อยแล้ว แอดมินสามารถตรวจสอบหรือแก้ไขได้ทันที")
+                            ->body("แยกหัวข้อ จัดเนื้อหา และดาวน์โหลดรูปภาพ {$imgCount} ภาพเรียบร้อยแล้ว แอดมินสามารถตรวจสอบหรือแก้ไขได้ทันที")
                             ->success()
                             ->duration(8000)
                             ->send();
