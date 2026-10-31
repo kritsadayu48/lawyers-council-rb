@@ -18,6 +18,10 @@ Route::view('/contact', 'pages.contact')->name('contact');
 Route::get('/news', [HomeController::class, 'newsIndex'])->name('news.index');
 Route::get('/news/{news:slug}', [HomeController::class, 'showNews'])->name('news.show');
 
+// ระบบนำเข้าข่าวสารจาก Facebook อัตโนมัติ (รองรับ Bookmarklet และฟอร์มด่วน)
+Route::match(['get', 'post'], '/admin/news/facebook-import', [\App\Http\Controllers\FacebookImportController::class, 'handle'])
+    ->name('admin.news.facebook-import');
+
 // Dynamic Sitemap & Robots.txt สำหรับ Google Search Console และ SEO
 Route::get('/sitemap.xml', function () {
     $xml = \App\Services\SitemapService::generateXml();
