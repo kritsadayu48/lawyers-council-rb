@@ -80,6 +80,8 @@ class CreateNews extends CreateRecord
 
                     $textToUse = $rawContent;
 
+                    $extractedPublishedAt = null;
+
                     if (!empty($url)) {
                         Notification::make()
                             ->title('กำลังดึงข้อมูลจาก Facebook...')
@@ -92,12 +94,15 @@ class CreateNews extends CreateRecord
                             $imageUrls = array_merge($imageUrls, $scraped['images']);
                         }
                         if (empty($textToUse)) {
-                            if (!empty($scraped['content'])) {
-                                $textToUse = $scraped['content'];
+                            if (!empty($scraped['raw_text'])) {
+                                $textToUse = $scraped['raw_text'];
+                            } elseif (!empty($scraped['content'])) {
+                                $textToUse = strip_tags(str_replace(['<br>', '<br/>', '<p>', '</p>'], ["\n", "\n", '', "\n\n"], $scraped['content']));
                             } elseif (!empty($scraped['title'])) {
                                 $textToUse = $scraped['title'];
                             }
                         }
+                        $extractedPublishedAt = $scraped['published_at'] ?? null;
                     }
 
                     if (empty($textToUse)) {
@@ -115,7 +120,7 @@ class CreateNews extends CreateRecord
                             text: $textToUse,
                             imageUrls: $imageUrls,
                             categoryId: $categoryId,
-                            publishedAt: null,
+                            publishedAt: $extractedPublishedAt,
                             isPublished: $isPublished
                         );
 

@@ -83,6 +83,8 @@ class ListNews extends ListRecords
 
                     $textToUse = $rawContent;
 
+                    $extractedPublishedAt = null;
+
                     if (!empty($url)) {
                         Notification::make()
                             ->title('กำลังดึงข้อมูลจาก Facebook...')
@@ -95,12 +97,15 @@ class ListNews extends ListRecords
                             $imageUrls = array_merge($imageUrls, $scraped['images']);
                         }
                         if (empty($textToUse)) {
-                            if (!empty($scraped['content'])) {
-                                $textToUse = $scraped['content'];
+                            if (!empty($scraped['raw_text'])) {
+                                $textToUse = $scraped['raw_text'];
+                            } elseif (!empty($scraped['content'])) {
+                                $textToUse = strip_tags(str_replace(['<br>', '<br/>', '<p>', '</p>'], ["\n", "\n", '', "\n\n"], $scraped['content']));
                             } elseif (!empty($scraped['title'])) {
                                 $textToUse = $scraped['title'];
                             }
                         }
+                        $extractedPublishedAt = $scraped['published_at'] ?? null;
                     }
 
                     if (empty($textToUse)) {
@@ -118,7 +123,7 @@ class ListNews extends ListRecords
                             text: $textToUse,
                             imageUrls: $imageUrls,
                             categoryId: $categoryId,
-                            publishedAt: null,
+                            publishedAt: $extractedPublishedAt,
                             isPublished: $isPublished
                         );
 

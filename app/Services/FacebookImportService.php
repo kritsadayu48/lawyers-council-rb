@@ -212,6 +212,7 @@ class FacebookImportService
                         return [
                             'title' => $parsed['title'],
                             'content' => $parsed['content'],
+                            'raw_text' => $rawText,
                             'published_at' => $parsed['published_at'],
                             'images' => $json['images'] ?? [],
                             'error' => null,
@@ -223,7 +224,7 @@ class FacebookImportService
             }
         }
 
-        // 2. สำรอง: หากยังไม่ได้ตั้ง Cloud Scraper ให้ใช้วิธีดึงผ่าน Open Graph
+        // 2. สำรอง: หากยังไม่ได้ตั้ง Cloud Scraper หรือ Scraper ไม่พร้อม ให้ใช้วิธีดึงผ่าน Open Graph
         try {
             $response = Http::withHeaders([
                 'User-Agent' => 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
@@ -238,6 +239,12 @@ class FacebookImportService
                 }
                 if (preg_match('/<meta[^>]+property=["\']og:description["\'][^>]+content=["\'](.*?)["\']/is', $html, $mDesc)) {
                     $result['content'] = html_entity_decode(trim($mDesc[1]), ENT_QUOTES, 'UTF-8');
+                }
+                if (preg_match('/<meta[^>]+(?:property=["\']og:image["\']|name=["\']twitter:image["\'])[^>]+content=["\'](.*?)["\']/is', $html, $mImg)) {
+                    $imgUrl = html_entity_decode(trim($mImg[1]), ENT_QUOTES, 'UTF-8');
+                    if (!empty($imgUrl)) {
+                        $result['images'][] = $imgUrl;
+                    }
                 }
             }
         } catch (\Throwable $e) {
