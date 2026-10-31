@@ -106,7 +106,10 @@ class NewsResource extends Resource
 {
     return $table
         ->columns([
-            ImageColumn::make('cover_image')->label('รูปปก')->circular(),
+            ImageColumn::make('cover_image')
+                ->label('รูปปก')
+                ->circular()
+                ->defaultImageUrl(asset('images/logo.png')),
             TextColumn::make('title')->label('หัวข้อข่าว')->limit(40)->searchable()->sortable(),
             TextColumn::make('category.name')->label('หมวดหมู่')->badge()->sortable(),
             IconColumn::make('is_published')->label('สถานะ')->boolean()->sortable(),

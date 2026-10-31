@@ -16,14 +16,14 @@
         <div class="flex-1">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h4 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>⚡ ปุ่มลัดดูดข่าวคลิกเดียว (Bookmarklet)</span>
+                    <span>⚡ ปุ่มลัดดูดข่าวคลิกเดียว (Bookmarklet) — รองรับอัลบั้ม 70+ รูป</span>
                     <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                        แนะนำที่สุด • ดึงรูปและเนื้อหาครบ
+                        ดึงรูปครบ 100% พร้อมเลื่อนจอออโต้
                     </span>
                 </h4>
             </div>
             <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                ขณะเปิดดูโพสต์บน Facebook ของเพจสภาทนายความ ให้กดปุ่มนี้บนแถบบุ๊กมาร์ก ระบบจะดูดข้อความตัวเต็มและรูปภาพความละเอียดสูงทั้งหมดมาสร้างข่าวในเว็บให้อัตโนมัติ
+                ขณะเปิดดูโพสต์หรืออัลบั้มรูปบน Facebook เพจสภาทนายความ ให้กดปุ่มนี้บนแถบบุ๊กมาร์ก ระบบจะเลื่อนหน้าจออัตโนมัติเพื่อสแกนรูปภาพความละเอียดสูงทั้งหมด และดาวน์โหลดเข้าสู่เว็บไซต์ให้อัตโนมัติ
             </p>
         </div>
     </div>
@@ -62,19 +62,26 @@
             </button>
         </div>
 
+        <!-- คำแนะนำเคล็ดลับสำหรับอัลบั้ม 70+ รูป -->
+        <div class="mt-3.5 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+            <span class="font-bold">💡 เคล็ดลับสำหรับโพสต์ที่มีรูป 70+ รูป (หรือมีปุ่ม +XX):</span>
+            <br>
+            เนื่องจาก Facebook ซ่อนรูปภาพส่วนใหญ่ไว้ จะแสดงแค่ 4-5 รูปแรกในหน้าฟีด แนะนำให้ <strong>คลิกที่รูปภาพหรือปุ่ม '+XX' บน Facebook เพื่อเปิดดู 'อัลบั้มเต็ม'</strong> ก่อน แล้วจึงกดปุ่ม Bookmarklet ระบบจะเลื่อนหน้าจออัตโนมัติ (Auto-scroll) เพื่อดึงรูปจริงความละเอียดสูงทั้งหมดมาให้ครบ 70+ รูปทันทีครับ!
+        </div>
+
         <!-- ขั้นตอน 3 ขั้นตอนง่ายๆ -->
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
             <div class="flex items-start gap-2">
                 <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 text-[11px]">1</span>
-                <span class="text-slate-600 dark:text-slate-400">เปิดดูโพสต์บน Facebook ของสภาทนายความ</span>
+                <span class="text-slate-600 dark:text-slate-400">เปิดดูโพสต์หรือคลิกเปิดอัลบั้มรูปบน Facebook</span>
             </div>
             <div class="flex items-start gap-2">
                 <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 text-[11px]">2</span>
-                <span class="text-slate-600 dark:text-slate-400">กดปุ่ม <strong>"📌 ส่งข่าวเข้าเว็บสภา"</strong> บนแถบบุ๊กมาร์ก</span>
+                <span class="text-slate-600 dark:text-slate-400">กดปุ่ม <strong>"📌 ส่งข่าวเข้าเว็บสภา"</strong> บนแถบบุ๊กมาร์ก (รอจอเลื่อน 3 วิ)</span>
             </div>
             <div class="flex items-start gap-2">
                 <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 text-[11px]">3</span>
-                <span class="text-slate-600 dark:text-slate-400">ระบบโหลดรูปจริงและเนื้อหาเข้าเว็บให้ ตรวจทานแล้วกดบันทึก!</span>
+                <span class="text-slate-600 dark:text-slate-400">ระบบดาวน์โหลดรูปและเนื้อหาครบทุกรูป ตรวจทานแล้วกดบันทึก!</span>
             </div>
         </div>
     </div>

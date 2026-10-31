@@ -23,6 +23,8 @@ Route::match(['get', 'post'], '/admin/news/facebook-import', [\App\Http\Controll
     ->name('admin.news.facebook-import');
 Route::post('/admin/news/facebook-import/process', [\App\Http\Controllers\FacebookImportController::class, 'process'])
     ->name('admin.news.facebook-import.process');
+Route::post('/admin/news/facebook-import/append-batch', [\App\Http\Controllers\FacebookImportController::class, 'appendBatch'])
+    ->name('admin.news.facebook-import.append-batch');
 
 // Dynamic Sitemap & Robots.txt สำหรับ Google Search Console และ SEO
 Route::get('/sitemap.xml', function () {

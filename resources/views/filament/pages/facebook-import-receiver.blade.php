@@ -19,10 +19,16 @@
             <div class="absolute inset-0 rounded-full border-4 border-blue-500/20 animate-ping"></div>
             <div class="w-16 h-16 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
         </div>
-        <h3 class="text-lg font-bold text-white mb-1">กำลังนำเข้าข่าวสารจาก Facebook...</h3>
-        <p id="statusText" class="text-xs text-slate-400 mb-4">กำลังอ่านข้อมูลและดาวน์โหลดรูปภาพความละเอียดสูง</p>
-        <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
-            <div class="bg-blue-500 h-1.5 rounded-full animate-pulse w-3/4"></div>
+        <h3 class="text-lg font-bold text-white mb-1">กำลังนำเข้าข่าวสารและรูปภาพ...</h3>
+        <p id="statusText" class="text-xs text-slate-300 mb-3">กำลังอ่านข้อมูลโพสต์...</p>
+        
+        <!-- แถบแสดงความคืบหน้า (Progress Bar) สำหรับรูป 70+ ภาพ -->
+        <div class="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden mb-2">
+            <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2.5 rounded-full transition-all duration-300" style="width: 10%;"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400">
+            <span id="progressCount">เตรียมดาวน์โหลด...</span>
+            <span id="progressPercent">10%</span>
         </div>
     </div>
 
@@ -69,9 +75,12 @@
                 try {
                     var jsonStr = decodeURIComponent(hash.substring(6));
                     var data = JSON.parse(jsonStr);
+                    var allImages = data.images || [];
+                    var totalImages = allImages.length;
 
-                    document.getElementById('statusText').innerText = 'พบข้อความโพสต์และรูปภาพ ' + (data.images ? data.images.length : 0) + ' รูป กำลังบันทึกเข้าสู่เว็บไซต์...';
+                    updateProgress(10, 'พบข้อความโพสต์และรูปภาพทั้งหมด ' + totalImages + ' รูป', 'เริ่มสร้างข่าว...');
 
+                    // ขั้นตอนที่ 1: สร้างหัวข้อข่าว และโหลดรูปชุดแรก (รูปปก + 5 รูป)
                     fetch('{{ url("/admin/news/facebook-import/process") }}', {
                         method: 'POST',
                         headers: {
@@ -81,25 +90,85 @@
                         },
                         body: JSON.stringify({
                             text: data.text || '',
-                            images: data.images || [],
+                            images: allImages,
                             source_url: data.source_url || ''
                         })
                     })
+                    .then(function(res) { return res.json(); })
                     .then(function(res) {
-                        return res.json();
-                    })
-                    .then(function(res) {
-                        if (res.success && res.redirect) {
-                            document.getElementById('statusText').innerText = '✅ นำเข้าสำเร็จ! กำลังเปิดหน้าแก้ไขข่าว...';
-                            window.location.href = res.redirect;
-                        } else {
-                            alert('เกิดข้อผิดพลาด: ' + (res.message || 'ไม่สามารถนำเข้าข้อมูลได้'));
-                            document.getElementById('loadingState').classList.add('hidden');
-                            document.getElementById('manualState').classList.remove('hidden');
+                        if (!res.success) {
+                            throw new Error(res.message || 'ไม่สามารถสร้างข่าวได้');
                         }
+
+                        var newsId = res.news_id;
+                        var redirectUrl = res.redirect;
+                        var remainingImages = res.remaining_images || [];
+
+                        if (remainingImages.length === 0) {
+                            updateProgress(100, '✅ นำเข้าสำเร็จครบถ้วน!', 'กำลังเปิดหน้าแก้ไขข่าว...');
+                            setTimeout(function() { window.location.href = redirectUrl; }, 600);
+                            return;
+                        }
+
+                        // ขั้นตอนที่ 2: แบ่งรูปที่เหลือดาวน์โหลดเป็น Batch ละ 8 รูป ป้องกัน Timeout สำหรับรูป 70+ รูป
+                        var batchSize = 8;
+                        var batches = [];
+                        for (var i = 0; i < remainingImages.length; i += batchSize) {
+                            batches.push(remainingImages.slice(i, i + batchSize));
+                        }
+
+                        var processedImages = 5;
+                        var currentBatchIndex = 0;
+
+                        function processNextBatch() {
+                            if (currentBatchIndex >= batches.length) {
+                                updateProgress(100, '✅ นำเข้าสำเร็จครบ ' + totalImages + ' ภาพ!', 'กำลังเปิดหน้าแก้ไขข่าว...');
+                                setTimeout(function() { window.location.href = redirectUrl; }, 800);
+                                return;
+                            }
+
+                            var chunk = batches[currentBatchIndex];
+                            currentBatchIndex++;
+
+                            fetch('{{ url("/admin/news/facebook-import/append-batch") }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    news_id: newsId,
+                                    images: chunk
+                                })
+                            })
+                            .then(function(r) { return r.json(); })
+                            .then(function(batchRes) {
+                                processedImages += chunk.length;
+                                if (processedImages > totalImages) processedImages = totalImages;
+
+                                var pct = Math.round((processedImages / totalImages) * 90) + 10;
+                                updateProgress(
+                                    pct,
+                                    'กำลังดาวน์โหลดรูปภาพความละเอียดสูง... (' + processedImages + ' จาก ' + totalImages + ' รูป)',
+                                    processedImages + ' / ' + totalImages + ' รูป'
+                                );
+
+                                // โหลดชุดถัดไปทันที
+                                processNextBatch();
+                            })
+                            .catch(function(err) {
+                                console.warn('Batch download warning:', err);
+                                // หากชุดนี้มีปัญหา ให้ข้ามไปทำชุดถัดไป ไม่ค้าง
+                                processNextBatch();
+                            });
+                        }
+
+                        // เริ่มกระบวนการโหลดรูปภาพที่เหลือ
+                        processNextBatch();
                     })
                     .catch(function(err) {
-                        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message);
+                        alert('เกิดข้อผิดพลาด: ' + err.message);
                         document.getElementById('loadingState').classList.add('hidden');
                         document.getElementById('manualState').classList.remove('hidden');
                     });
@@ -115,6 +184,18 @@
                 document.getElementById('manualState').classList.remove('hidden');
             }
 
+            function updateProgress(percent, status, countText) {
+                var bar = document.getElementById('progressBar');
+                var st = document.getElementById('statusText');
+                var cnt = document.getElementById('progressCount');
+                var pct = document.getElementById('progressPercent');
+
+                if (bar) bar.style.width = percent + '%';
+                if (st) st.innerText = status;
+                if (cnt) cnt.innerText = countText;
+                if (pct) pct.innerText = percent + '%';
+            }
+
             // จัดการฟอร์มแบบ Manual
             document.getElementById('manualForm').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -128,7 +209,7 @@
 
                 document.getElementById('manualState').classList.add('hidden');
                 document.getElementById('loadingState').classList.remove('hidden');
-                document.getElementById('statusText').innerText = 'กำลังจัดฟอร์แมตหัวข้อและสร้างข่าว...';
+                updateProgress(50, 'กำลังจัดฟอร์แมตหัวข้อและสร้างข่าว...', 'กำลังบันทึก...');
 
                 fetch('{{ url("/admin/news/facebook-import/process") }}', {
                     method: 'POST',

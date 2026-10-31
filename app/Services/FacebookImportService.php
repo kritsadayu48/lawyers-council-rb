@@ -31,7 +31,7 @@ class FacebookImportService
         $rawText = str_replace(["\r\n", "\r"], "\n", trim($rawText));
         if (empty($rawText)) {
             return [
-                'title' => 'ข่าวสารสภาทนายความ (' . date('d/m/Y H:i') . ')',
+                'title' => 'ข่าวสารและกิจกรรมสภาทนายความ (' . date('d/m/Y') . ')',
                 'content' => '<p>ไม่มีรายละเอียดข้อความ</p>',
                 'published_at' => now(),
             ];
@@ -56,14 +56,13 @@ class FacebookImportService
         }
 
         // วิเคราะห์หาหัวข้อข่าวที่แท้จริง (หลีกเลี่ยงการนำบรรทัดที่เป็นแค่วันที่มาเป็นหัวข้อ)
-        $firstLine = $nonEmptyLines[0] ?? 'ข่าวสารและประกาศสภาทนายความ';
+        $firstLine = $nonEmptyLines[0] ?? 'ข่าวสารและกิจกรรมสภาทนายความ';
         $title = $firstLine;
 
         $isDateOnly = preg_match('/^(?:วัน(?:ที่|จันทร์|อังคาร|พุธ|พฤหัสบดี|ศุกร์|เสาร์|อาทิตย์)?\s*\d+|เมื่อวัน(?:ที่)?\s*\d+)/u', $firstLine)
             || (mb_strlen($firstLine) < 35 && preg_match('/(มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม|\d{4})/u', $firstLine));
 
         if ($isDateOnly && isset($nonEmptyLines[1])) {
-            // บรรทัดแรกเป็นแค่วันที่ ให้ใช้บรรทัดที่ 2 เป็นหัวข้อข่าว
             $title = $nonEmptyLines[1];
         }
 
@@ -103,7 +102,7 @@ class FacebookImportService
 
     /**
      * ดาวน์โหลดรูปภาพจาก URL ของ Facebook CDN มาเก็บลงใน Storage เครื่องโดยตรง
-     * มีระบบกรองขนาดไฟล์: หากเล็กกว่า 10KB (รูปเงา silhouette, รูปโปรไฟล์จิ๋ว หรือ 388B tracking pixel) จะปฏิเสธทันที
+     * มีการตรวจสอบ Magic Bytes (รูปภาพจริง) และบันทึกลงทั้ง storage/app/public และ public/storage
      */
     public static function downloadImage(string $url, string $subfolder = 'news-covers'): ?string
     {
@@ -139,26 +138,42 @@ class FacebookImportService
             }
 
             $body = $response->body();
-            // ตรวจสอบขนาดไฟล์: ภาพถ่ายข่าวกิจกรรมจริงต้องมีขนาดอย่างน้อย 10KB (10,000 bytes) ขึ้นไป
-            // หากน้อยกว่านี้มักเป็น 388 bytes tracking gif หรือภาพ silhouette ว่างเปล่า
-            if (strlen($body) < 10000) {
+            // ตรวจสอบขนาดไฟล์: ภาพถ่ายข่าวกิจกรรมจริงต้องมีขนาดอย่างน้อย 8KB ขึ้นไป
+            if (strlen($body) < 8000) {
                 return null;
             }
 
-            // ตรวจสอบนามสกุลไฟล์จาก Content-Type
-            $contentType = strtolower($response->header('Content-Type') ?? '');
+            // ตรวจสอบ Magic Bytes ว่าเป็นรูปภาพจริง (JPEG, PNG, WEBP, GIF) ป้องกันไฟล์ HTML Error 403 ถูกบันทึกเป็นรูป
+            $isRealImage = str_starts_with($body, "\xFF\xD8\xFF") // JPEG
+                || str_starts_with($body, "\x89PNG\r\n\x1a\n") // PNG
+                || str_starts_with($body, "RIFF") // WEBP
+                || str_starts_with($body, "GIF8"); // GIF
+
+            if (!$isRealImage) {
+                return null;
+            }
+
             $extension = 'jpg';
-            if (str_contains($contentType, 'png')) {
+            if (str_starts_with($body, "\x89PNG")) {
                 $extension = 'png';
-            } elseif (str_contains($contentType, 'webp')) {
+            } elseif (str_starts_with($body, "RIFF")) {
                 $extension = 'webp';
             }
 
             $filename = 'fb_' . date('Ymd_His') . '_' . Str::random(8) . '.' . $extension;
             $path = $subfolder . '/' . $filename;
 
-            // บันทึกไฟล์ลงใน public disk
-            Storage::disk('public')->put($path, $body);
+            // 1. บันทึกใน storage/app/public
+            $appPath = storage_path('app/public/' . $path);
+            @mkdir(dirname($appPath), 0777, true);
+            @file_put_contents($appPath, $body);
+
+            // 2. หาก public/storage เป็นโฟลเดอร์จริง (ไม่ใช่ symlink) ให้บันทึกคู่ขนานเพื่อความชัวร์ 100%
+            $pubPath = public_path('storage/' . $path);
+            if (file_exists(public_path('storage')) && !is_link(public_path('storage'))) {
+                @mkdir(dirname($pubPath), 0777, true);
+                @file_put_contents($pubPath, $body);
+            }
 
             return $path;
         } catch (\Throwable $e) {
@@ -168,85 +183,7 @@ class FacebookImportService
     }
 
     /**
-     * พยายามอ่านข้อมูล Open Graph จากลิงก์โพสต์ Facebook
-     */
-    public static function scrapeFacebookUrl(string $url): array
-    {
-        $result = [
-            'title' => '',
-            'content' => '',
-            'images' => [],
-            'error' => null,
-        ];
-
-        try {
-            $response = Http::withHeaders([
-                'User-Agent' => 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language' => 'th-TH,th;q=0.9,en;q=0.8',
-            ])->timeout(15)->get($url);
-
-            if (!$response->successful()) {
-                $response = Http::withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-                    'Accept-Language' => 'th-TH,th;q=0.9,en;q=0.8',
-                ])->timeout(15)->get($url);
-            }
-
-            if (!$response->successful()) {
-                $result['error'] = 'Facebook ปฏิเสธการเข้าถึงจากเซิร์ฟเวอร์ (HTTP ' . $response->status() . ')';
-                return $result;
-            }
-
-            $html = $response->body();
-
-            if (preg_match('/<meta[^>]+property=["\']og:title["\'][^>]+content=["\'](.*?)["\']/is', $html, $mTitle)) {
-                $result['title'] = html_entity_decode(trim($mTitle[1]), ENT_QUOTES, 'UTF-8');
-            }
-
-            if (preg_match('/<meta[^>]+property=["\']og:description["\'][^>]+content=["\'](.*?)["\']/is', $html, $mDesc)) {
-                $result['content'] = html_entity_decode(trim($mDesc[1]), ENT_QUOTES, 'UTF-8');
-            }
-
-            $imageUrls = [];
-            if (preg_match_all('/<meta[^>]+property=["\']og:image(?::secure_url)?["\'][^>]+content=["\'](.*?)["\']/is', $html, $mImages)) {
-                foreach ($mImages[1] as $img) {
-                    $cleanImg = html_entity_decode(trim($img));
-                    if (!empty($cleanImg) && !in_array($cleanImg, $imageUrls)) {
-                        $imageUrls[] = $cleanImg;
-                    }
-                }
-            }
-
-            if (preg_match_all('/https?:\\\\?\/\\\\?\/[^\s"\'<>]*?(?:fbcdn\.net|scontent[a-z0-9\.-]*?\.net)[^\s"\'<>]*/i', $html, $mCdn)) {
-                foreach ($mCdn[0] as $rawUrl) {
-                    $cleaned = stripslashes(html_entity_decode($rawUrl));
-                    if (str_contains($cleaned, 'emoji') || str_contains($cleaned, 'rsrc.php') || str_contains($cleaned, 'p50x50') || str_contains($cleaned, 'silhouette')) {
-                        continue;
-                    }
-                    if (!in_array($cleaned, $imageUrls)) {
-                        $imageUrls[] = $cleaned;
-                    }
-                }
-            }
-
-            $result['images'] = array_slice($imageUrls, 0, 20);
-
-            if (empty($result['title']) || str_contains($result['title'], 'Facebook') || str_contains($result['title'], 'สภาทนายความ')) {
-                if (!empty($result['content'])) {
-                    $parsed = self::parseText($result['content']);
-                    $result['title'] = $parsed['title'];
-                }
-            }
-        } catch (\Throwable $e) {
-            $result['error'] = 'เกิดข้อผิดพลาดในการดึงข้อมูล: ' . $e->getMessage();
-        }
-
-        return $result;
-    }
-
-    /**
-     * ดำเนินการสร้างข่าวสารและดาวน์โหลดรูปภาพทั้งหมด
+     * ดำเนินการสร้างข่าวสารและดาวน์โหลดรูปภาพเบื้องต้น (สร้าง Record พร้อมรูปปกและรูปแรกๆ)
      */
     public static function processImport(
         string $text,
@@ -268,7 +205,7 @@ class FacebookImportService
             $categoryId = $defaultCat ? $defaultCat->id : 7;
         }
 
-        // 3. กรองและดาวน์โหลดเฉพาะรูปภาพจริง (> 10KB)
+        // 3. กรองและดาวน์โหลดเฉพาะรูปภาพจริง (> 8KB)
         $coverImage = null;
         $galleryImages = [];
 
@@ -276,7 +213,7 @@ class FacebookImportService
 
         foreach ($uniqueImageUrls as $imageUrl) {
             if (!$coverImage) {
-                // พยายามดาวน์โหลดรูปแรกที่ผ่านเกณฑ์เป็นรูปปก
+                // รูปแรกที่ผ่านเกณฑ์ บันทึกเป็นรูปปกข่าว
                 $downloaded = self::downloadImage($imageUrl, 'news-covers');
                 if ($downloaded) {
                     $coverImage = $downloaded;
@@ -304,18 +241,66 @@ class FacebookImportService
     }
 
     /**
-     * สร้างโค้ด Bookmarklet JavaScript ขั้นสูง ที่ส่งข้อมูลผ่าน URL Hash
-     * ป้องกันปัญหา SameSite Cookies และป้องกันการเด้งไปหน้า Login/Admin
+     * ดาวน์โหลดรูปภาพเพิ่มเติมแบบ Batch และเพิ่มเข้าสู่ gallery_images ของข่าวที่มีอยู่แล้ว
+     */
+    public static function appendGalleryImages(News $news, array $imageUrls): int
+    {
+        $existing = $news->gallery_images ?? [];
+        if (!is_array($existing)) {
+            $existing = [];
+        }
+
+        $addedCount = 0;
+        foreach ($imageUrls as $imageUrl) {
+            $downloaded = self::downloadImage($imageUrl, 'news-galleries');
+            if ($downloaded) {
+                $existing[] = $downloaded;
+                $addedCount++;
+            }
+        }
+
+        $news->gallery_images = array_values(array_unique($existing));
+
+        // หากยังไม่มีรูปปก ให้เอารูปแรกที่ดาวน์โหลดได้มาเป็นรูปปก
+        if (empty($news->cover_image) && count($news->gallery_images) > 0) {
+            $first = array_shift($news->gallery_images);
+            // คัดลอกไป news-covers
+            $newCover = str_replace('news-galleries/', 'news-covers/', $first);
+            @copy(storage_path('app/public/' . $first), storage_path('app/public/' . $newCover));
+            $news->cover_image = $newCover;
+        }
+
+        $news->save();
+        return $addedCount;
+    }
+
+    /**
+     * สร้างโค้ด Bookmarklet JavaScript ขั้นสูง ที่มีระบบ Auto-Scroll
+     * เลื่อนหน้าจออัตโนมัติเพื่อสแกนและดึงรูปภาพทั้งหมดในอัลบั้ม (แม้มี 70+ รูป)
      */
     public static function generateBookmarkletJs(string $targetUrl): string
     {
-        // บังคับใช้ HTTPS หากไม่ใช่ localhost
         if (!str_contains($targetUrl, 'localhost') && !str_contains($targetUrl, '127.0.0.1')) {
             $targetUrl = preg_replace('/^http:/i', 'https:', $targetUrl);
         }
 
         $rawJs = <<<JS
 javascript:(function(){
+    if (window._fbImportRunning) return;
+    window._fbImportRunning = true;
+
+    // สร้าง UI Banner ลอยบนหน้าจอ Facebook
+    var bar = document.createElement('div');
+    bar.id = 'fb-import-bar';
+    bar.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);z-index:9999999;background:#0f172a;color:#fff;padding:12px 22px;border-radius:18px;box-shadow:0 15px 35px rgba(0,0,0,0.6);font-family:sans-serif;font-size:13px;display:flex;align-items:center;gap:15px;border:2px solid #3b82f6;';
+    bar.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div style="width:14px;height:14px;border:2px solid #3b82f6;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div><div><div style="font-weight:bold;color:#fff;">📸 กำลังสแกนรูปภาพในโพสต์/อัลบั้ม...</div><div id="fb-import-cnt" style="font-size:11px;color:#94a3b8;">พบแล้ว 0 รูป (กำลังเลื่อนหน้าจออัตโนมัติ)</div></div></div><button id="fb-import-stop" style="background:#2563eb;color:#fff;border:none;padding:6px 14px;border-radius:10px;font-weight:bold;font-size:12px;cursor:pointer;">ส่งข้อมูลทันที</button>';
+    
+    var style = document.createElement('style');
+    style.innerHTML = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+    document.body.appendChild(bar);
+
+    // ขยายข้อความ ดูเพิ่มเติม
     try {
         var buttons = document.querySelectorAll('div[role="button"]');
         for (var i = 0; i < buttons.length; i++) {
@@ -326,27 +311,19 @@ javascript:(function(){
         }
     } catch(e) {}
 
-    setTimeout(function(){
-        var text = '';
-        var sel = window.getSelection().toString().trim();
-        if (sel) {
-            text = sel;
-        } else {
-            var post = document.querySelector('div[role="article"]') || document.querySelector('div[data-pagelet*="FeedUnit"]') || document.body;
-            var msgEl = post.querySelector('div[data-ad-preview="message"]') || post.querySelector('div[dir="auto"]');
-            text = msgEl ? msgEl.innerText.trim() : (post.innerText || '');
-        }
+    // ดึงข้อความโพสต์
+    var text = window.getSelection().toString().trim();
+    if (!text) {
+        var post = document.querySelector('div[role="article"]') || document.querySelector('div[data-pagelet*="FeedUnit"]') || document.body;
+        var msgEl = post.querySelector('div[data-ad-preview="message"]') || post.querySelector('div[dir="auto"]');
+        text = msgEl ? msgEl.innerText.trim() : (post.innerText || '');
+    }
 
-        if (!text) {
-            alert('❌ ไม่พบข้อความโพสต์ กรุณาคลิกเลือกคลุมข้อความบนโพสต์ที่ต้องการ แล้วกดปุ่มนี้อีกครั้งครับ');
-            return;
-        }
-
-        var post = document.querySelector('div[role="article"]') || document;
-        var imgs = [];
-        var allImgs = post.querySelectorAll('img');
-        for (var j = 0; j < allImgs.length; j++) {
-            var img = allImgs[j];
+    var imgs = [];
+    function scanImages() {
+        var all = document.querySelectorAll('img');
+        for (var j = 0; j < all.length; j++) {
+            var img = all[j];
             var src = img.src || '';
             if (!src || (src.indexOf('scontent') === -1 && src.indexOf('fbcdn') === -1)) continue;
             if (src.indexOf('emoji') !== -1 || src.indexOf('rsrc.php') !== -1 || src.indexOf('p50x50') !== -1 || src.indexOf('p100x100') !== -1 || src.indexOf('p160x160') !== -1 || src.indexOf('silhouette') !== -1) continue;
@@ -354,22 +331,69 @@ javascript:(function(){
             if (alt.indexOf('profile') !== -1 || alt.indexOf('โปรไฟล์') !== -1) continue;
             var w = img.naturalWidth || img.width || 0;
             var h = img.naturalHeight || img.height || 0;
-            if (w >= 200 && h >= 160 && imgs.indexOf(src) === -1) {
-                imgs.push(src);
+            if (w >= 160 && h >= 140) {
+                if (imgs.indexOf(src) === -1) {
+                    imgs.push(src);
+                }
             }
         }
+        var cntEl = document.getElementById('fb-import-cnt');
+        if (cntEl) cntEl.innerText = 'พบแล้ว ' + imgs.length + ' รูป (กำลังเลื่อนหน้าจออัตโนมัติ)';
+    }
 
-        var payload = {
-            text: text,
-            images: imgs,
-            source_url: window.location.href,
-            time: new Date().getTime()
-        };
+    // สแกนรอบแรกทันที
+    scanImages();
 
-        var hashData = encodeURIComponent(JSON.stringify(payload));
-        var destUrl = '{$targetUrl}#data=' + hashData;
-        window.open(destUrl, '_blank');
-    }, 400);
+    var scrollTicks = 0;
+    var maxTicks = 18; // เลื่อนประมาณ 4-5 วินาที
+    var prevCount = 0;
+    var stableTicks = 0;
+
+    var timer = setInterval(function() {
+        window.scrollBy(0, 900);
+        scanImages();
+        scrollTicks++;
+
+        if (imgs.length === prevCount) {
+            stableTicks++;
+        } else {
+            stableTicks = 0;
+            prevCount = imgs.length;
+        }
+
+        // หากถึงด้านล่างหรือไม่มีรูปใหม่เพิ่มขึ้นแล้ว ให้ส่งข้อมูล
+        if (scrollTicks >= maxTicks || stableTicks >= 5) {
+            finishAndSend();
+        }
+    }, 280);
+
+    document.getElementById('fb-import-stop').onclick = function() {
+        finishAndSend();
+    };
+
+    function finishAndSend() {
+        if (!window._fbImportRunning) return;
+        window._fbImportRunning = false;
+        clearInterval(timer);
+
+        var cntEl = document.getElementById('fb-import-cnt');
+        if (cntEl) cntEl.innerText = '✅ สแกนสำเร็จพบ ' + imgs.length + ' รูป! กำลังเปิดหน้าเว็บสภา...';
+
+        setTimeout(function() {
+            if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
+
+            var payload = {
+                text: text,
+                images: imgs,
+                source_url: window.location.href,
+                time: new Date().getTime()
+            };
+
+            var hashData = encodeURIComponent(JSON.stringify(payload));
+            var destUrl = '{$targetUrl}#data=' + hashData;
+            window.open(destUrl, '_blank');
+        }, 700);
+    }
 })();
 JS;
 
