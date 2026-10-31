@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
     res.json({
         status: 'ok',
         service: 'Lawyers Council Facebook Scraper API',
-        version: '1.4.0',
+        version: '1.5.0',
         uptime: process.uptime()
     });
 });
@@ -172,7 +172,7 @@ app.post('/scrape', async (req, res) => {
 
         // =========================================================================
         // ขั้นตอนที่ 2: หากพบ Post ID ให้เปิดหน้าอัลบั้ม media/set/?set=pcb.<id>
-        // เพื่อสแกนดึงรูปภาพเพิ่มเติมให้ได้มากที่สุด (สูงสุด 24-70+ รูป)
+        // เพื่อสแกนดึงรูปภาพเพิ่มเติมให้ได้มากที่สุด (สแกนลึก 20-25 รอบ สูงสุด 70+ รูป)
         // =========================================================================
         if (canonicalPostId) {
             try {
@@ -180,23 +180,57 @@ app.post('/scrape', async (req, res) => {
                 console.log(`[SCRAPER] Navigating to album: ${albumUrl}...`);
                 await page.goto(albumUrl, { waitUntil: 'networkidle2', timeout: 25000 });
 
-                // เลื่อนหน้าจอเพื่อโหลดรูปภาพในอัลบั้ม
-                for (let scroll = 0; scroll < 6; scroll++) {
+                let prevSize = allImageUrls.size;
+                let stagnantRounds = 0;
+
+                // เลื่อนหน้าจอแบบไดนามิกเพื่อโหลดรูปภาพในอัลบั้มทั้งหมด
+                for (let scroll = 0; scroll < 25; scroll++) {
                     const batch = await page.evaluate(() => {
+                        // ปิดและลบกล่อง Popup Login / Overlay ที่กั้นไม่ให้เลื่อนจอ
+                        const dialog = document.querySelector('[role="dialog"]');
+                        if (dialog) {
+                            const closeBtn = dialog.querySelector('[aria-label="Close"], [aria-label="ปิด"], [role="button"]');
+                            if (closeBtn) {
+                                try { closeBtn.click(); } catch (e) {}
+                            } else {
+                                try { dialog.remove(); } catch (e) {}
+                            }
+                        }
+                        try {
+                            document.body.style.overflow = 'auto';
+                            document.documentElement.style.overflow = 'auto';
+                        } catch (e) {}
+
                         const list = [];
                         document.querySelectorAll('img').forEach(i => {
-                            const src = i.src || '';
+                            const src = i.currentSrc || i.src || '';
                             if (src && (src.includes('scontent') || src.includes('fbcdn'))) {
-                                if (i.width >= 120 && i.height >= 120) list.push(src);
+                                if ((i.naturalWidth >= 100 || i.width >= 100) && (i.naturalHeight >= 100 || i.height >= 100)) {
+                                    list.push(src);
+                                }
                             }
                         });
-                        window.scrollBy(0, 900);
+
+                        window.scrollBy(0, 1100);
                         return list;
                     });
+
                     batch.forEach(src => allImageUrls.add(src));
-                    await new Promise(r => setTimeout(r, 400));
+
+                    if (allImageUrls.size === prevSize) {
+                        stagnantRounds++;
+                        if (stagnantRounds >= 4) {
+                            console.log(`[SCRAPER] No new images after ${stagnantRounds} scrolls, stopped at ${allImageUrls.size} images.`);
+                            break;
+                        }
+                    } else {
+                        stagnantRounds = 0;
+                        prevSize = allImageUrls.size;
+                    }
+
+                    await new Promise(r => setTimeout(r, 600));
                 }
-                console.log(`[SCRAPER] Album scan finished! Total unique images now: ${allImageUrls.size}`);
+                console.log(`[SCRAPER] Deep album scan finished! Total unique raw images: ${allImageUrls.size}`);
             } catch (albumErr) {
                 console.warn(`[SCRAPER] Album scan warning: ${albumErr.message}`);
             }
@@ -269,8 +303,27 @@ app.post('/scrape', async (req, res) => {
             }
         }
 
-        const images = Array.from(allImageUrls);
-        console.log(`[SCRAPER] Scrape completed successfully! Text length: ${fullText.length}, Photos: ${images.length}`);
+        // กรองรูปซ้ำโดยใช้ Facebook Photo ID และคัดเลือกเฉพาะ URL ที่ให้ความละเอียดสูงสุด
+        const photoMap = new Map();
+        for (const rawUrl of allImageUrls) {
+            // Facebook image URLs usually contain: /[uploadId]_[photoId]_[hash]_[n/o].[jpg|webp]
+            const match = rawUrl.match(/\/(\d+)_(\d+)_([a-zA-Z0-9]+)_[a-z0-9]+\.(?:jpg|png|webp)/i);
+            const photoKey = match ? match[2] : rawUrl;
+
+            // ให้คะแนนความละเอียดรูปภาพ (รูปขนาดใหญ่ / ไม่ใช่ thumbnail จะได้คะแนนสูงกว่า)
+            let score = 1;
+            if (rawUrl.includes('cstp=mx') || rawUrl.includes('ctp=s')) score += 20;
+            if (rawUrl.includes('_s720x720_')) score += 10;
+            if (rawUrl.includes('_s526x395_')) score += 5;
+            if (rawUrl.length > 200) score += 2;
+
+            if (!photoMap.has(photoKey) || photoMap.get(photoKey).score < score) {
+                photoMap.set(photoKey, { url: rawUrl, score });
+            }
+        }
+
+        const images = Array.from(photoMap.values()).map(item => item.url);
+        console.log(`[SCRAPER] Scrape completed successfully! Text length: ${fullText.length}, High-res Photos: ${images.length}`);
 
         await browser.close();
         browser = null;

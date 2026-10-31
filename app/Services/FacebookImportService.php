@@ -184,6 +184,95 @@ class FacebookImportService
     }
 
     /**
+     * ดาวน์โหลดรูปภาพจำนวนมากแบบขนาน (Concurrent Batch Pool) รวดเร็ว รองรับ 70+ รูปในไม่กี่วินาที
+     */
+    public static function downloadImagesBatch(array $urls, string $subfolder = 'news-galleries'): array
+    {
+        $validUrls = [];
+        foreach ($urls as $url) {
+            $u = html_entity_decode(trim($url));
+            if (empty($u) || !filter_var($u, FILTER_VALIDATE_URL)) continue;
+
+            $urlLower = strtolower($u);
+            if (
+                str_contains($urlLower, 'p50x50') ||
+                str_contains($urlLower, 'p100x100') ||
+                str_contains($urlLower, 'p160x160') ||
+                str_contains($urlLower, 'p200x200') ||
+                str_contains($urlLower, 'emoji') ||
+                str_contains($urlLower, 'rsrc.php') ||
+                str_contains($urlLower, 'silhouette') ||
+                str_contains($urlLower, 'profile_pic')
+            ) {
+                continue;
+            }
+            $validUrls[] = $u;
+        }
+
+        $validUrls = array_values(array_unique($validUrls));
+        if (empty($validUrls)) {
+            return [];
+        }
+
+        $savedPaths = [];
+        $chunks = array_chunk($validUrls, 10); // ดาวน์โหลดทีละ 10 รูปพร้อมกัน
+
+        foreach ($chunks as $chunk) {
+            try {
+                $responses = Http::pool(function ($pool) use ($chunk) {
+                    foreach ($chunk as $imgUrl) {
+                        $pool->withHeaders([
+                            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                            'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                            'Referer' => 'https://www.facebook.com/',
+                        ])->timeout(20)->get($imgUrl);
+                    }
+                });
+
+                foreach ($responses as $response) {
+                    if ($response instanceof \Illuminate\Http\Client\Response && $response->successful()) {
+                        $body = $response->body();
+                        if (strlen($body) < 8000) continue;
+
+                        $isRealImage = str_starts_with($body, "\xFF\xD8\xFF") // JPEG
+                            || str_starts_with($body, "\x89PNG\r\n\x1a\n") // PNG
+                            || str_starts_with($body, "RIFF") // WEBP
+                            || str_starts_with($body, "GIF8"); // GIF
+
+                        if (!$isRealImage) continue;
+
+                        $extension = 'jpg';
+                        if (str_starts_with($body, "\x89PNG")) {
+                            $extension = 'png';
+                        } elseif (str_starts_with($body, "RIFF")) {
+                            $extension = 'webp';
+                        }
+
+                        $filename = 'fb_' . date('Ymd_His') . '_' . Str::random(8) . '.' . $extension;
+                        $path = $subfolder . '/' . $filename;
+
+                        $appPath = storage_path('app/public/' . $path);
+                        @mkdir(dirname($appPath), 0777, true);
+                        @file_put_contents($appPath, $body);
+
+                        $pubPath = public_path('storage/' . $path);
+                        if (file_exists(public_path('storage')) && !is_link(public_path('storage'))) {
+                            @mkdir(dirname($pubPath), 0777, true);
+                            @file_put_contents($pubPath, $body);
+                        }
+
+                        $savedPaths[] = $path;
+                    }
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $savedPaths;
+    }
+
+    /**
      * ดึงข้อมูลโพสต์และรูปภาพทั้งหมดจากลิงก์ Facebook (รองรับ Google Cloud Run Scraper)
      */
     public static function scrapeFacebookUrl(string $url): array
@@ -285,20 +374,14 @@ class FacebookImportService
 
         $uniqueImageUrls = array_values(array_unique(array_filter($imageUrls)));
 
-        foreach ($uniqueImageUrls as $imageUrl) {
-            if (!$coverImage) {
-                // รูปแรกที่ผ่านเกณฑ์ บันทึกเป็นรูปปกข่าว
-                $downloaded = self::downloadImage($imageUrl, 'news-covers');
-                if ($downloaded) {
-                    $coverImage = $downloaded;
-                    continue;
-                }
-            }
+        if (!empty($uniqueImageUrls)) {
+            // รูปแรกดาวน์โหลดมาเป็นรูปปกข่าว
+            $coverImage = self::downloadImage($uniqueImageUrls[0], 'news-covers');
 
-            // รูปถัดมาที่ผ่านเกณฑ์ บันทึกเป็นคลังภาพกิจกรรม
-            $downloaded = self::downloadImage($imageUrl, 'news-galleries');
-            if ($downloaded) {
-                $galleryImages[] = $downloaded;
+            // รูปที่เหลือดาวน์โหลดแบบขนาน (Concurrent Pool) เข้าคลังภาพกิจกรรม
+            $remainingUrls = array_slice($uniqueImageUrls, 1);
+            if (!empty($remainingUrls)) {
+                $galleryImages = self::downloadImagesBatch($remainingUrls, 'news-galleries');
             }
         }
 
@@ -324,16 +407,11 @@ class FacebookImportService
             $existing = [];
         }
 
-        $addedCount = 0;
-        foreach ($imageUrls as $imageUrl) {
-            $downloaded = self::downloadImage($imageUrl, 'news-galleries');
-            if ($downloaded) {
-                $existing[] = $downloaded;
-                $addedCount++;
-            }
-        }
+        $newDownloaded = self::downloadImagesBatch($imageUrls, 'news-galleries');
+        $addedCount = count($newDownloaded);
 
-        $news->gallery_images = array_values(array_unique($existing));
+        $merged = array_merge($existing, $newDownloaded);
+        $news->gallery_images = array_values(array_unique($merged));
 
         // หากยังไม่มีรูปปก ให้เอารูปแรกที่ดาวน์โหลดได้มาเป็นรูปปก
         if (empty($news->cover_image) && count($news->gallery_images) > 0) {
